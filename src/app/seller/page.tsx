@@ -1,4 +1,5 @@
 'use client';
+import { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { api } from '@/lib/api';
 import { Product } from '@/lib/types';
@@ -31,7 +32,7 @@ export default function SellerPanel() {
           <p>No products added yet.</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {myProducts.map(p => (
+            {myProducts.map((p: Product) => (
               <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '0.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -55,6 +56,7 @@ export default function SellerPanel() {
         <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Recent Orders</h2>
         <p style={{ color: 'var(--text-secondary)' }}>You have 3 orders pending shipment.</p>
         <button className="btn-primary" style={{ marginTop: '1rem', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>View Orders</button>
+      </div>
       </div>
     </ProtectedRoute>
   );
