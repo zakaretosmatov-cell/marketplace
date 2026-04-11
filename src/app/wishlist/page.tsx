@@ -2,12 +2,14 @@
 import Link from 'next/link';
 import { useWishlist } from '@/context/WishlistContext';
 import ProductCard from '@/components/ProductCard';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default function WishlistPage() {
   const { wishlistItems } = useWishlist();
 
   return (
-    <div className="container" style={{ padding: '2rem 0' }}>
+    <ProtectedRoute>
+      <div className="container" style={{ padding: '2rem 0' }}>
       <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '2rem' }}>Your Wishlist</h1>
       
       {wishlistItems.length === 0 ? (
@@ -27,5 +29,6 @@ export default function WishlistPage() {
         </div>
       )}
     </div>
+    </ProtectedRoute>
   );
 }

@@ -5,6 +5,7 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { mockApi } from '@/lib/mockApi';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default function CheckoutPage() {
   const { cartItems, totalAmount, clearCart } = useCart();
@@ -65,7 +66,8 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="container" style={{ maxWidth: '800px', padding: '2rem 0' }}>
+    <ProtectedRoute>
+      <div className="container" style={{ maxWidth: '800px', padding: '2rem 0' }}>
       <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '2rem' }}>Checkout</h1>
       
       <form onSubmit={handleCheckout} className="card" style={{ padding: '2rem' }}>
@@ -124,5 +126,6 @@ export default function CheckoutPage() {
         </button>
       </form>
     </div>
+    </ProtectedRoute>
   );
 }

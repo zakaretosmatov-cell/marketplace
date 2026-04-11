@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 
 export default function Header() {
-  const { user, role, logout } = useAuth();
+  const { user, role, logout, isLoading } = useAuth();
   const { cartItems } = useCart();
   
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
@@ -58,23 +58,41 @@ export default function Header() {
             )}
           </Link>
 
-          {user ? (
+          {isLoading ? (
+            <div style={{ width: '120px', height: '38px', backgroundColor: 'var(--bg-tertiary)', borderRadius: '0.5rem', animation: 'pulse 1.5s infinite' }}></div>
+          ) : user ? (
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Welcome, {user.email}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0.75rem', backgroundColor: 'var(--bg-tertiary)', borderRadius: '2rem' }}>
+                <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--accent-color)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>
+                  {user.email ? user.email.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+                  {user.displayName || user.email?.split('@')[0]}
+                  {role && <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', padding: '0.1rem 0.4rem', backgroundColor: 'var(--glass-bg)', border: '1px solid var(--border-color)', borderRadius: '1rem', color: 'var(--text-secondary)' }}>{role}</span>}
+                </span>
+              </div>
               <button 
                 onClick={logout} 
                 style={{ 
-                  padding: '0.5rem 1rem', 
+                  padding: '0.4rem 0.8rem', 
                   border: '1px solid var(--border-color)', 
                   borderRadius: '0.5rem',
-                  fontWeight: 500
-                }}>
+                  fontWeight: 500,
+                  fontSize: '0.875rem',
+                  backgroundColor: 'transparent',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-secondary)'}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
                 Logout
               </button>
             </div>
           ) : (
-            <Link href="/login" className="btn-primary" style={{ padding: '0.5rem 1rem' }}>
-              Login
+            <Link href="/login" className="btn-primary" style={{ padding: '0.5rem 1.5rem', borderRadius: '2rem' }}>
+              Sign In
             </Link>
           )}
         </nav>

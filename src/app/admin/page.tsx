@@ -1,24 +1,13 @@
 'use client';
-import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { useState } from 'react';
 
 export default function AdminDashboard() {
-  const { user, role, isLoading } = useAuth();
-  const router = useRouter();
-  
   const [stats, setStats] = useState({ users: 156, orders: 1240, revenue: 54230.50 });
 
-  useEffect(() => {
-    if (!isLoading && role !== 'admin') {
-      router.push('/');
-    }
-  }, [role, isLoading, router]);
-
-  if (isLoading || role !== 'admin') return <div style={{ padding: '4rem', textAlign: 'center' }}>Loading...</div>;
-
   return (
-    <div className="container" style={{ padding: '2rem 0' }}>
+    <ProtectedRoute allowedRoles={['admin']}>
+      <div className="container" style={{ padding: '2rem 0' }}>
       <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '2rem' }}>Administration Control Panel</h1>
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem', marginBottom: '3rem' }}>
@@ -44,6 +33,6 @@ export default function AdminDashboard() {
           <li><button className="btn-primary" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>Financial Reports</button></li>
         </ul>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

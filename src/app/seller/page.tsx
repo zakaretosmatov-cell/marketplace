@@ -1,31 +1,27 @@
 'use client';
-import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { useEffect, useState } from 'react';
 import { mockApi } from '@/lib/mockApi';
 import { Product } from '@/lib/types';
+import { useAuth } from '@/context/AuthContext';
 
 export default function SellerPanel() {
-  const { user, role, isLoading } = useAuth();
-  const router = useRouter();
+  const { role } = useAuth();
   const [myProducts, setMyProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    if (!isLoading && role !== 'seller') {
-      router.push('/');
-    } else if (role === 'seller') {
+    if (role === 'seller' || role === 'admin') {
       // Simulate getting products for current seller
       mockApi.getProducts().then(data => {
         // Just mocking that half of the products belong to the seller
         setMyProducts(data.slice(0, 2));
       });
     }
-  }, [role, isLoading, router]);
-
-  if (isLoading || role !== 'seller') return <div style={{ padding: '4rem', textAlign: 'center' }}>Loading...</div>;
+  }, [role]);
 
   return (
-    <div className="container" style={{ padding: '2rem 0' }}>
+    <ProtectedRoute allowedRoles={['seller', 'admin']}>
+      <div className="container" style={{ padding: '2rem 0' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 700 }}>Seller Dashboard</h1>
         <button className="btn-primary">Add New Product</button>
@@ -62,6 +58,6 @@ export default function SellerPanel() {
         <p style={{ color: 'var(--text-secondary)' }}>You have 3 orders pending shipment.</p>
         <button className="btn-primary" style={{ marginTop: '1rem', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>View Orders</button>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }
