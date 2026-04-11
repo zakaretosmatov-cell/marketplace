@@ -1,23 +1,21 @@
 'use client';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { useEffect, useState } from 'react';
-import { mockApi } from '@/lib/mockApi';
+import { api } from '@/lib/api';
 import { Product } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
 
 export default function SellerPanel() {
-  const { role } = useAuth();
+  const { user, role } = useAuth();
   const [myProducts, setMyProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    if (role === 'seller' || role === 'admin') {
-      // Simulate getting products for current seller
-      mockApi.getProducts().then(data => {
-        // Just mocking that half of the products belong to the seller
-        setMyProducts(data.slice(0, 2));
+    if ((role === 'seller' || role === 'admin') && user) {
+      // Fetch products for current seller from Firestore
+      api.getProductsBySeller(user.uid).then(data => {
+        setMyProducts(data);
       });
     }
-  }, [role]);
+  }, [role, user]);
 
   return (
     <ProtectedRoute allowedRoles={['seller', 'admin']}>

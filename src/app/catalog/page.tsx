@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Product } from '@/lib/types';
-import { mockApi } from '@/lib/mockApi';
+import { api } from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
 
 export default function CatalogPage() {
@@ -12,9 +12,14 @@ export default function CatalogPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
-      const data = await mockApi.getProducts();
-      setProducts(data);
-      setLoading(false);
+      try {
+        const data = await api.getProducts();
+        setProducts(data);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchProducts();
   }, []);

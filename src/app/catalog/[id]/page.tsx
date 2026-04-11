@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Product, Review } from '@/lib/types';
-import { mockApi } from '@/lib/mockApi';
+import { api } from '@/lib/api';
 import { useCart } from '@/context/CartContext';
 
 export default function ProductDetailPage() {
@@ -22,14 +22,14 @@ export default function ProductDetailPage() {
       const productId = Array.isArray(params.id) ? params.id[0] : params.id;
       
       try {
-        const p = await mockApi.getProductById(productId);
+        const p = await api.getProductById(productId);
         if (p) {
           setProduct(p);
-          const r = await mockApi.getReviewsByProductId(productId);
+          const r = await api.getReviewsByProductId(productId);
           setReviews(r);
           
-          // Mock AI Recommendation System: Fetch all, filter by category minus current
-          const allProducts = await mockApi.getProducts();
+          // AI Recommendation System: Fetch all, filter by category minus current
+          const allProducts = await api.getProducts();
           const related = allProducts.filter(item => item.category === p.category && item.id !== p.id);
           // If not enough in category, just fill with random
           if (related.length < 3) {

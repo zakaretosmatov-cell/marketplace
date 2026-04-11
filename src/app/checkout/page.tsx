@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { mockApi } from '@/lib/mockApi';
+import { api } from '@/lib/api';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 export default function CheckoutPage() {
@@ -40,8 +40,8 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     try {
-      // Simulate API call for creating an order
-      await mockApi.createOrder({
+      // Create a real order in Firestore
+      const orderId = await api.createOrder({
         userId: user?.uid || 'guest',
         items: cartItems.map(item => ({
           productId: item.id,
@@ -55,7 +55,7 @@ export default function CheckoutPage() {
       });
 
       clearCart();
-      showToast('Order placed successfully!', 'success');
+      showToast(`Order placed successfully! Order ID: ${orderId}`, 'success');
       router.push('/');
     } catch (error) {
       console.error(error);
