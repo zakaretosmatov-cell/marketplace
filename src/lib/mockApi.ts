@@ -1,7 +1,7 @@
 import { Product, Order, Review } from './types';
 
 // Initial Mock Data
-const MOCK_PRODUCTS: Product[] = [
+let MOCK_PRODUCTS: Product[] = [
   {
     id: 'p1', 
     name: 'MacBook Pro M3 Max', 
@@ -92,6 +92,32 @@ const MOCK_PRODUCTS: Product[] = [
     sellerId: 's4', 
     rating: 4.6, 
     reviewsCount: 12
+  },
+  {
+    id: 'p8',
+    name: 'Dell XPS 15',
+    description: '13th Gen Intel Core i9, NVIDIA RTX 4070, 3.5K OLED Touch Display. Elegance meets power.',
+    price: 2399.00,
+    stock: 5,
+    image: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=800&q=80',
+    category: 'Laptops',
+    brand: 'Dell',
+    sellerId: 's1',
+    rating: 4.7,
+    reviewsCount: 28
+  },
+  {
+    id: 'p9',
+    name: 'Google Pixel 8 Pro',
+    description: 'The all-pro phone engineered by Google. It’s sleek, sophisticated, and has the best Pixel camera yet.',
+    price: 999.00,
+    stock: 15,
+    image: 'https://images.unsplash.com/photo-1696423602143-df9bc6f69d31?w=800&q=80',
+    category: 'Smartphones',
+    brand: 'Google',
+    sellerId: 's2',
+    rating: 4.8,
+    reviewsCount: 64
   }
 ];
 
@@ -124,5 +150,19 @@ export const mockApi = {
         ...orderPayload
       } as Order);
     }, 1000));
+  },
+
+  addProduct: async (product: Partial<Product>): Promise<string> => {
+    return new Promise((resolve) => setTimeout(() => {
+      const newProduct = {
+        id: `p${MOCK_PRODUCTS.length + 1}`,
+        rating: 0,
+        reviewsCount: 0,
+        ...product
+      } as Product;
+      MOCK_PRODUCTS = [...MOCK_PRODUCTS, newProduct];
+      resolve(newProduct.id);
+    }, 600));
   }
 };
+

@@ -58,12 +58,40 @@ export const api = {
 
 
   getProductsBySeller: async (sellerId: string): Promise<Product[]> => {
-    const q = query(collection(db, PRODUCTS_COLLECTION), where('sellerId', '==', sellerId));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as Product[];
+    if (USE_MOCK) {
+      const allProducts = await mockApi.getProducts();
+      return allProducts.filter(p => p.sellerId === sellerId);
+    }
+    try {
+      const q = query(collection(db, PRODUCTS_COLLECTION), where('sellerId', '==', sellerId));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Product[];
+    } catch (error) {
+      console.warn("Firestore failed, falling back to mock data", error);
+      const allProducts = await mockApi.getProducts();
+      return allProducts.filter(p => p.sellerId === sellerId);
+    }
+  },
+
+  addProduct: async (productData: Partial<Product>): Promise<string> => {
+    if (USE_MOCK) {
+      return mockApi.addProduct(productData);
+    }
+    try {
+      const docRef = await addDoc(collection(db, PRODUCTS_COLLECTION), {
+        ...productData,
+        rating: 0,
+        reviewsCount: 0,
+        createdAt: new Date().toISOString()
+      });
+      return docRef.id;
+    } catch (error) {
+      console.warn("Firestore failed, falling back to mock data", error);
+      return mockApi.addProduct(productData);
+    }
   },
 
   // Reviews
