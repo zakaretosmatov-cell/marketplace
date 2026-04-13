@@ -1,3 +1,4 @@
+'use client';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useState } from 'react';
 import { api } from '@/lib/api';
