@@ -84,7 +84,7 @@ export default function ProfilePage() {
               return (
                 <button
                   key={r.value}
-                  onClick={() => handleSwitch(r.value)}
+                  onClick={() => handleSwitch(r.value as Role)}
                   disabled={switching}
                   style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "1.25rem 1.5rem", borderRadius: "0.75rem", textAlign: "left", border: "2px solid " + (isActive ? r.color : "var(--border-color)"), backgroundColor: isActive ? "color-mix(in srgb, " + r.color + " 10%, transparent)" : "var(--bg-secondary)", cursor: switching ? "not-allowed" : "pointer", transition: "all 0.2s", opacity: switching && !isActive ? 0.6 : 1, width: "100%" }}
                 >
@@ -111,4 +111,5 @@ export default function ProfilePage() {
     </ProtectedRoute>
   );
 }
+
 
