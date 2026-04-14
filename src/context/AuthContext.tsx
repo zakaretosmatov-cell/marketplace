@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { 
   onAuthStateChanged, 
@@ -8,7 +8,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 
 export type Role = 'client' | 'seller' | 'admin' | null;
@@ -27,6 +27,7 @@ interface AuthContextType {
   loginWithGoogle: (roleInput?: Role) => Promise<void>;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   registerWithEmail: (email: string, password: string, roleInput?: Role) => Promise<void>;
+  switchRole: (newRole: Role) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -37,6 +38,7 @@ const AuthContext = createContext<AuthContextType>({
   loginWithGoogle: async () => {},
   loginWithEmail: async () => {},
   registerWithEmail: async () => {},
+  switchRole: async () => {},
   isLoading: true,
 });
 
@@ -54,8 +56,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           displayName: firebaseUser.displayName,
           photoURL: firebaseUser.photoURL,
         });
-
-        // Fetch user role from Firestore
         try {
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
           if (userDoc.exists()) {
@@ -73,7 +73,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setIsLoading(false);
     });
-
     return () => unsubscribe();
   }, []);
 
@@ -81,10 +80,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
     const firebaseUser = result.user;
-    
     const userRef = doc(db, 'users', firebaseUser.uid);
     const userDoc = await getDoc(userRef);
-    
     if (!userDoc.exists()) {
       await setDoc(userRef, {
         email: firebaseUser.email,
@@ -105,7 +102,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const registerWithEmail = async (email: string, password: string, roleInput: Role = 'client') => {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     const firebaseUser = result.user;
-    
     const userRef = doc(db, 'users', firebaseUser.uid);
     await setDoc(userRef, {
       email: firebaseUser.email,
@@ -115,6 +111,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRole(roleInput);
   };
 
+  const switchRole = async (newRole: Role) => {
+    if (!user || !newRole) return;
+    const userRef = doc(db, 'users', user.uid);
+    await updateDoc(userRef, { role: newRole });
+    setRole(newRole);
+  };
+
   const logout = async () => {
     await signOut(auth);
     setUser(null);
@@ -122,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, role, logout, loginWithGoogle, loginWithEmail, registerWithEmail, isLoading }}>
+    <AuthContext.Provider value={{ user, role, logout, loginWithGoogle, loginWithEmail, registerWithEmail, switchRole, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
