@@ -1,216 +1,159 @@
-'use client';
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Product } from '@/lib/types';
-import { api } from '@/lib/api';
-import ProductCard from '@/components/ProductCard';
-import { ArrowRight, Sparkles, Zap, ShieldCheck, Headphones } from 'lucide-react';
+﻿"use client";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Product } from "@/lib/types";
+import { api } from "@/lib/api";
+import ProductCard from "@/components/ProductCard";
+import { ArrowRight, Truck, ShieldCheck, RefreshCw, Headphones, ChevronRight } from "lucide-react";
+
+const CATEGORIES = [
+  { label: "Smartphones", icon: "рџ“±", id: "iOS" },
+  { label: "Laptops", icon: "рџ’»", id: "Ultrabooks" },
+  { label: "TVs", icon: "рџ“є", id: "OLED TVs" },
+  { label: "Audio", icon: "рџЋ§", id: "Headphones" },
+  { label: "Gaming", icon: "рџЋ®", id: "Gaming Consoles" },
+  { label: "Wearables", icon: "вЊљ", id: "Smartwatches" },
+  { label: "Tablets", icon: "рџ“џ", id: "iPad" },
+  { label: "Trending", icon: "рџ”Ґ", id: "Trending" },
+];
+
+const FEATURES = [
+  { icon: <Truck size={20} />, title: "Free Shipping", desc: "On orders over $99" },
+  { icon: <ShieldCheck size={20} />, title: "Secure Payment", desc: "256-bit SSL encryption" },
+  { icon: <RefreshCw size={20} />, title: "Easy Returns", desc: "30-day return policy" },
+  { icon: <Headphones size={20} />, title: "24/7 Support", desc: "Always here to help" },
+];
 
 export default function Home() {
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchFeatured = async () => {
-      try {
-        const data = await api.getProducts();
-        setFeaturedProducts(data.slice(0, 6)); // Get more for the new layout
-      } catch (error) {
-        console.error("Home featured fetch failed:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchFeatured();
+    api.getProducts().then(data => { setProducts(data); setLoading(false); });
   }, []);
 
-  const heroProduct = featuredProducts[0];
-  const secondaryProducts = featuredProducts.slice(1, 3);
-  const restProducts = featuredProducts.slice(3);
+  const featured = products.slice(0, 8);
+  const hero = products.find(p => p.category === "iOS" || p.brand === "Apple") || products[0];
 
   return (
-    <div className="container" style={{ paddingBottom: '5rem' }}>
-      {/* Grid Hero Section */}
-      <section style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '2fr 1fr', 
-        gridTemplateRows: 'auto auto',
-        gap: '1.5rem', 
-        padding: '2rem 0',
-        marginTop: '1rem'
-      }}>
-        
-        {/* Main Hero Card */}
-        <div className="card glass-card" style={{ 
-          gridRow: 'span 2', 
-          padding: '3rem', 
-          display: 'flex', 
-          flexDirection: 'column',
-          justifyContent: 'center',
-          position: 'relative',
-          minHeight: '500px',
-          background: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%)',
-          border: 'none',
-          boxShadow: 'var(--shadow-lg)'
-        }}>
-          <div style={{ position: 'relative', zIndex: 2, maxWidth: '60%' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', color: 'var(--accent-color)', fontWeight: 700, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              <div style={{ width: '20px', height: '20px', backgroundColor: 'var(--accent-soft)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Sparkles size={12} />
-              </div>
-              Future of Sound
+    <div style={{ paddingBottom: "4rem" }}>
+
+      {/* Hero */}
+      <section style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border-color)" }}>
+        <div className="container" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3rem", alignItems: "center", padding: "4rem 1.5rem" }}>
+          <div>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", borderRadius: "var(--radius-pill)", padding: "0.3rem 0.75rem", fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "1.5rem" }}>
+              <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--success)", display: "inline-block" }} />
+              New arrivals every week
             </div>
-            <h1 style={{ fontSize: '4.5rem', fontWeight: 900, lineHeight: 1.1, marginBottom: '1.5rem', letterSpacing: '-0.04em' }}>
-              Sequoia Inspira <span style={{ color: 'var(--accent-color)' }}>Musico.</span>
+            <h1 style={{ fontSize: "3.25rem", fontWeight: 900, lineHeight: 1.1, letterSpacing: "-0.04em", marginBottom: "1.25rem" }}>
+              The best tech,<br />
+              <span style={{ color: "var(--text-tertiary)" }}>all in one place.</span>
             </h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '2.5rem', lineHeight: 1.6 }}>
-              Experience sound like never before with Sequoia's ground-breaking audio technology. Pure, immersive, and uncompromising.
+            <p style={{ color: "var(--text-secondary)", fontSize: "1rem", lineHeight: 1.7, marginBottom: "2rem", maxWidth: "420px" }}>
+              Discover the latest smartphones, laptops, TVs and accessories. Premium quality, competitive prices.
             </p>
-            <Link href="/catalog" className="btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', padding: '1rem 2.5rem', fontSize: '1.1rem' }}>
-              View Collection <ArrowRight size={20} />
-            </Link>
-          </div>
-          
-          {/* Decorative Image Overlays */}
-          <div style={{ 
-            position: 'absolute', 
-            right: '-5%', 
-            top: '50%', 
-            transform: 'translateY(-50%)',
-            width: '60%',
-            height: '80%',
-            zIndex: 1,
-            pointerEvents: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-             {/* eslint-disable-next-line @next/next/no-img-element */}
-             <img 
-               src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80" 
-               alt="Hero Product" 
-               style={{ width: '100%', height: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 20px 50px rgba(0,0,0,0.15))' }} 
-             />
-          </div>
-        </div>
-
-        {/* Popular Feature Card */}
-        <div className="card" style={{ 
-          padding: '2rem', 
-          background: 'var(--bg-secondary)', 
-          display: 'flex', 
-          flexDirection: 'column', 
-          justifyContent: 'space-between',
-          border: '1px solid var(--border-color)'
-        }}>
-          <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Popular Colors</h3>
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-              {['#4361ee', '#f72585', '#4cc9f0', '#7209b7'].map(color => (
-                <div key={color} style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: color, border: '3px solid white', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}></div>
-              ))}
+            <div style={{ display: "flex", gap: "0.75rem" }}>
+              <Link href="/catalog" className="btn-primary" style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }}>
+                Shop Now <ArrowRight size={16} />
+              </Link>
+              <Link href="/catalog" className="btn-secondary" style={{ padding: "0.75rem 1.5rem", fontSize: "0.9rem" }}>
+                View Catalog
+              </Link>
             </div>
           </div>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '1rem' }}>Match your tech with your personality.</p>
-        </div>
-
-        {/* New Arrival Card */}
-        <div className="card glass-card" style={{ 
-          padding: '1.5rem', 
-          display: 'grid', 
-          gridTemplateColumns: '1fr 1fr', 
-          gap: '1rem',
-          alignItems: 'center',
-          background: 'linear-gradient(to right, var(--accent-color), var(--accent-hover))',
-          color: 'white',
-          border: 'none'
-        }}>
-          <div>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', opacity: 0.8 }}>New Gen</span>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 800 }}>X-Bud</h3>
-            <Link href="/catalog" style={{ display: 'inline-flex', marginTop: '1rem', padding: '0.5rem', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.2)' }}>
-              <ArrowRight size={20} color="white" />
-            </Link>
-          </div>
-          <div style={{ position: 'relative', width: '100%', height: '100px' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src="https://images.unsplash.com/photo-1544244015-0cd4b3ffad20?w=400&q=80" 
-              alt="Buds" 
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
-            />
-          </div>
-        </div>
-
-      </section>
-
-      {/* Feature Icons Section */}
-      <section style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        padding: '3rem 0', 
-        borderBottom: '1px solid var(--border-color)',
-        marginBottom: '4rem'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '1rem', backgroundColor: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color)' }}>
-            <Zap size={24} />
-          </div>
-          <div>
-            <h4 style={{ fontWeight: 700, fontSize: '1rem' }}>Ultra Fast</h4>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Same day shipping</p>
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '1rem', backgroundColor: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color)' }}>
-            <ShieldCheck size={24} />
-          </div>
-          <div>
-            <h4 style={{ fontWeight: 700, fontSize: '1rem' }}>Secure Web</h4>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Encrypted payments</p>
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '1rem', backgroundColor: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-color)' }}>
-            <Headphones size={24} />
-          </div>
-          <div>
-            <h4 style={{ fontWeight: 700, fontSize: '1rem' }}>Pro Support</h4>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>24/7 tech assistance</p>
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+            {hero && (
+              <div style={{ position: "relative", width: "100%", maxWidth: "420px" }}>
+                <div style={{ background: "var(--bg-primary)", borderRadius: "var(--radius-xl)", border: "1px solid var(--border-color)", overflow: "hidden", aspectRatio: "1", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "var(--shadow-lg)" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={hero.image} alt={hero.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+                <div style={{ position: "absolute", bottom: "1rem", left: "1rem", right: "1rem", background: "var(--glass-bg)", backdropFilter: "blur(12px)", border: "1px solid var(--glass-border)", borderRadius: "var(--radius-md)", padding: "0.875rem 1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <p style={{ fontWeight: 700, fontSize: "0.875rem" }}>{hero.name}</p>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.75rem" }}>{hero.brand}</p>
+                  </div>
+                  <p style={{ fontWeight: 800, fontSize: "1rem" }}>${hero.price.toLocaleString()}</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Grid of Products */}
-      <section>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '3rem' }}>
-          <div>
-            <h2 style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.03em' }}>Curated Tech</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>Selected gadgets for the modern world</p>
-          </div>
-          <Link href="/catalog" style={{ fontWeight: 600, color: 'var(--accent-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            View Full Catalog <ArrowRight size={18} />
+      {/* Features */}
+      <section style={{ borderBottom: "1px solid var(--border-color)" }}>
+        <div className="container" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0", padding: "0 1.5rem" }}>
+          {FEATURES.map((f, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.875rem", padding: "1.25rem 1rem", borderRight: i < 3 ? "1px solid var(--border-color)" : "none" }}>
+              <div style={{ width: "40px", height: "40px", borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-color)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)", flexShrink: 0 }}>
+                {f.icon}
+              </div>
+              <div>
+                <p style={{ fontWeight: 600, fontSize: "0.875rem" }}>{f.title}</p>
+                <p style={{ color: "var(--text-tertiary)", fontSize: "0.75rem" }}>{f.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Categories */}
+      <section className="container" style={{ padding: "3rem 1.5rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Shop by Category</h2>
+          <Link href="/catalog" style={{ fontSize: "0.875rem", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+            All categories <ChevronRight size={14} />
           </Link>
         </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: "0.75rem" }}>
+          {CATEGORIES.map(cat => (
+            <Link key={cat.id} href={`/catalog?cat=${cat.id}`} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem", padding: "1rem 0.5rem", background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "var(--radius-lg)", transition: "all 0.15s", textAlign: "center" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--bg-tertiary)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--text-tertiary)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "var(--bg-secondary)"; (e.currentTarget as HTMLElement).style.borderColor = "var(--border-color)"; }}
+            >
+              <span style={{ fontSize: "1.75rem" }}>{cat.icon}</span>
+              <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "var(--text-secondary)" }}>{cat.label}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
 
+      {/* Featured Products */}
+      <section className="container" style={{ padding: "0 1.5rem 3rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Featured Products</h2>
+          <Link href="/catalog" style={{ fontSize: "0.875rem", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+            View all <ChevronRight size={14} />
+          </Link>
+        </div>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '5rem 0' }}>
-            <div style={{ width: '40px', height: '40px', border: '3px solid var(--bg-tertiary)', borderTopColor: 'var(--accent-color)', borderRadius: '50%', margin: '0 auto', animation: 'spin 1s linear infinite' }}></div>
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          </div>
-        ) : (
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
-            gap: '2.5rem' 
-          }}>
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} style={{ height: "320px", borderRadius: "var(--radius-lg)", background: "var(--bg-secondary)", animation: "pulse 1.5s infinite" }} />
             ))}
           </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
+            {featured.map(p => <ProductCard key={p.id} product={p} />)}
+          </div>
         )}
+      </section>
+
+      {/* Banner */}
+      <section className="container" style={{ padding: "0 1.5rem" }}>
+        <div style={{ background: "var(--accent-color)", borderRadius: "var(--radius-xl)", padding: "3rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.875rem", marginBottom: "0.5rem" }}>Limited time offer</p>
+            <h2 style={{ color: "white", fontSize: "2rem", fontWeight: 800, letterSpacing: "-0.03em", marginBottom: "1rem" }}>Up to 30% off<br />on selected items</h2>
+            <Link href="/catalog" style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: "white", color: "var(--accent-color)", padding: "0.625rem 1.25rem", borderRadius: "var(--radius-md)", fontWeight: 700, fontSize: "0.875rem" }}>
+              Shop the sale <ArrowRight size={16} />
+            </Link>
+          </div>
+          <div style={{ fontSize: "8rem", opacity: 0.15 }}>рџ›ЌпёЏ</div>
+        </div>
       </section>
     </div>
   );
 }
-
