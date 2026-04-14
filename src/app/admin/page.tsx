@@ -1,26 +1,21 @@
 'use client';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { useToast } from '@/context/ToastContext';
 
 export default function AdminDashboard() {
   const { showToast } = useToast();
-  const [isSeeding, setIsSeeding] = useState(false);
-  const [stats, setStats] = useState({ users: 156, orders: 1240, revenue: 54230.50 });
+  const [stats, setStats] = useState({ products: 0, orders: 0, revenue: 0 });
 
-  const handleSeed = async () => {
-    setIsSeeding(true);
-    try {
-      await api.seedInitialData();
-      showToast('Database seeded successfully!', 'success');
-    } catch (error) {
-      console.error(error);
-      showToast('Failed to seed database.', 'error');
-    } finally {
-      setIsSeeding(false);
-    }
-  };
+  useEffect(() => {
+    Promise.all([api.getProducts(), api.getAllOrders()]).then(([products, orders]) => {
+      const revenue = orders
+        .filter(o => o.status !== 'cancelled')
+        .reduce((s, o) => s + o.totalAmount, 0);
+      setStats({ products: products.length, orders: orders.length, revenue });
+    });
+  }, []);
 
   return (
     <ProtectedRoute allowedRoles={['admin']}>
@@ -29,8 +24,8 @@ export default function AdminDashboard() {
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem', marginBottom: '3rem' }}>
         <div className="card" style={{ padding: '1.5rem', textAlign: 'center' }}>
-          <h3 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Total Users</h3>
-          <p style={{ fontSize: '2.5rem', fontWeight: 700 }}>{stats.users}</p>
+          <h3 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Total Products</h3>
+          <p style={{ fontSize: '2.5rem', fontWeight: 700 }}>{stats.products}</p>
         </div>
         <div className="card" style={{ padding: '1.5rem', textAlign: 'center' }}>
           <h3 style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Total Orders</h3>
@@ -43,24 +38,10 @@ export default function AdminDashboard() {
       </div>
 
       <div className="card" style={{ padding: '2rem' }}>
-        <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>System Management Options</h2>
+        <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>System Management</h2>
         <ul style={{ display: 'flex', flexDirection: 'column', gap: '1rem', listStyle: 'none' }}>
-          <li><button className="btn-primary" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>Manage Users & Blocking</button></li>
-          <li><button className="btn-primary" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>Financial Reports</button></li>
-          <li style={{ marginTop: '2rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-            <h3 style={{ fontSize: '1rem', color: 'var(--error)', marginBottom: '0.5rem' }}>Danger Zone</h3>
-            <button 
-              className="btn-primary" 
-              onClick={handleSeed}
-              disabled={isSeeding}
-              style={{ backgroundColor: 'var(--error)', color: 'white' }}
-            >
-              {isSeeding ? 'Seeding...' : 'Seed Initial Products'}
-            </button>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-              Only use this to populate an empty database with sample products.
-            </p>
-          </li>
+          <li><a href="/orders" className="btn-primary" style={{ display: 'inline-block', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>View All Orders</a></li>
+          <li><a href="/catalog" className="btn-primary" style={{ display: 'inline-block', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>View Catalog</a></li>
         </ul>
       </div>
       </div>
