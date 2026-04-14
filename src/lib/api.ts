@@ -1,4 +1,4 @@
-﻿import {
+import {
   collection,
   getDocs,
   getDoc,
@@ -109,17 +109,5 @@ export const api = {
       statusHistory: arrayUnion(event),
     });
   },
-
-  // Seed (admin only вЂ” populates Firestore from mockApi data)
-  seedInitialData: async (): Promise<void> => {
-    const { mockApi } = await import("./mockApi");
-    const products = await mockApi.getProducts();
-    const batch = writeBatch(db);
-    products.forEach(p => {
-      const { id, ...data } = p;
-      const ref = doc(collection(db, PRODUCTS_COLLECTION));
-      batch.set(ref, data);
-    });
-    await batch.commit();
-  },
 };
+
