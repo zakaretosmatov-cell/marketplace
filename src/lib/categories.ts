@@ -6,70 +6,89 @@ export interface Category {
 
 export const CATEGORY_TREE: Category[] = [
   {
-    id: 'Electronics',
-    label: 'Electronics',
+    id: 'Smartphones',
+    label: '📱 Smartphones',
     children: [
-      {
-        id: 'Laptops',
-        label: 'Laptops',
-        children: [
-          { id: 'Gaming Laptops', label: 'Gaming Laptops' },
-          { id: 'Ultrabooks', label: 'Ultrabooks' },
-          { id: 'Workstations', label: 'Workstations' },
-        ],
-      },
-      {
-        id: 'Smartphones',
-        label: 'Smartphones',
-        children: [
-          { id: 'Android', label: 'Android' },
-          { id: 'iOS', label: 'iOS' },
-        ],
-      },
-      {
-        id: 'Tablets',
-        label: 'Tablets',
-        children: [
-          { id: 'iPad', label: 'iPad' },
-          { id: 'Android Tablets', label: 'Android Tablets' },
-        ],
-      },
-      {
-        id: 'TVs',
-        label: 'TVs',
-        children: [
-          { id: 'OLED TVs', label: 'OLED' },
-          { id: 'QLED TVs', label: 'QLED' },
-          { id: '8K TVs', label: '8K' },
-        ],
-      },
+      { id: 'iOS', label: 'iOS (iPhone)' },
+      { id: 'Android', label: 'Android' },
     ],
   },
   {
-    id: 'Audio',
-    label: 'Audio',
-    children: [
-      { id: 'Headphones', label: 'Headphones' },
-      { id: 'Speakers', label: 'Speakers' },
-      { id: 'Earbuds', label: 'Earbuds' },
-    ],
-  },
-  {
-    id: 'Wearables',
-    label: 'Wearables',
+    id: 'Smartwatches',
+    label: '⌚ Smart Watches',
     children: [
       { id: 'Smartwatches', label: 'Smartwatches' },
       { id: 'Fitness Trackers', label: 'Fitness Trackers' },
     ],
   },
   {
+    id: 'TVs',
+    label: '📺 TVs',
+    children: [
+      { id: 'OLED TVs', label: 'OLED' },
+      { id: 'QLED TVs', label: 'QLED' },
+      { id: '8K TVs', label: '8K' },
+    ],
+  },
+  {
+    id: 'Audio',
+    label: '🎧 Audio',
+    children: [
+      { id: 'Headphones', label: 'Headphones' },
+      { id: 'Earbuds', label: 'Earbuds' },
+      { id: 'Speakers', label: 'Speakers' },
+    ],
+  },
+  {
+    id: 'Laptops',
+    label: '💻 Laptops',
+    children: [
+      { id: 'Gaming Laptops', label: 'Gaming' },
+      { id: 'Ultrabooks', label: 'Ultrabooks' },
+      { id: 'Workstations', label: 'Workstations' },
+    ],
+  },
+  {
+    id: 'Tablets',
+    label: '📟 Tablets',
+    children: [
+      { id: 'iPad', label: 'iPad' },
+      { id: 'Android Tablets', label: 'Android Tablets' },
+    ],
+  },
+  {
+    id: 'Gaming',
+    label: '🎮 Gaming',
+    children: [
+      { id: 'Gaming Consoles', label: 'Consoles' },
+      { id: 'VR & AR', label: 'VR / AR' },
+      { id: 'Gaming Accessories', label: 'Accessories' },
+    ],
+  },
+  {
+    id: 'Computer Accessories',
+    label: '🖥 PC Accessories',
+  },
+  {
     id: 'Accessories',
-    label: 'Accessories',
+    label: '🔌 Accessories',
     children: [
       { id: 'Chargers', label: 'Chargers' },
-      { id: 'Cases', label: 'Cases' },
       { id: 'Cables', label: 'Cables' },
+      { id: 'Cases', label: 'Cases' },
     ],
+  },
+  {
+    id: 'Smart Home',
+    label: '🏠 Smart Home',
+  },
+  {
+    id: 'Car Tech',
+    label: '🚗 Car Tech',
+  },
+  {
+    id: 'Trending',
+    label: '🔥 Trending',
   },
 ];
 
