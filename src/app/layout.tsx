@@ -9,7 +9,7 @@ import { WishlistProvider } from '@/context/WishlistContext';
 import { ToastProvider } from '@/context/ToastContext';
 
 export const metadata: Metadata = {
-  title: 'NextGen E-commerce',
+  title: 'TechNova',
   description: 'Production-ready modern e-commerce platform',
 };
 

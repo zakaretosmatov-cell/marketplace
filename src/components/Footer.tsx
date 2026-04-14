@@ -8,7 +8,7 @@ export default function Footer() {
     }}>
       <div className="container" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '2rem' }}>
         <div>
-          <h4 style={{ fontWeight: 600, marginBottom: '1rem' }}>NextGenStore</h4>
+          <h4 style={{ fontWeight: 600, marginBottom: '1rem' }}>TechNova</h4>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', maxWidth: '300px' }}>
             The ultimate e-commerce platform built with Next.js and modern technologies.
           </p>
@@ -30,7 +30,7 @@ export default function Footer() {
         </div>
       </div>
       <div style={{ textAlign: 'center', marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid var(--border-color)', color: 'var(--text-tertiary)', fontSize: '0.875rem' }}>
-        &copy; {new Date().getFullYear()} NextGenStore. All rights reserved.
+        &copy; {new Date().getFullYear()} TechNova. All rights reserved.
       </div>
     </footer>
   );

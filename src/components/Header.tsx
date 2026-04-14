@@ -43,7 +43,7 @@ export default function Header() {
           <div style={{ width: '32px', height: '32px', backgroundColor: 'var(--accent-color)', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
             <Compass size={20} />
           </div>
-          <span>NextGen</span>
+          <span>TechNova</span>
         </Link>
         
         {/* Search Bar - Centered */}
