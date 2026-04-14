@@ -6,6 +6,7 @@ import { Product } from "@/lib/types";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { Search, Plus, Pencil, Trash2, X, Package, ChevronDown } from "lucide-react";
+import ImageUpload from "@/components/ImageUpload";
 
 const CATEGORIES = ["Laptops", "Smartphones", "Tablets", "Wearables", "Audio", "TVs", "Other"];
 
@@ -303,5 +304,6 @@ export default function SellerPage() {
     </ProtectedRoute>
   );
 }
+
 
 
