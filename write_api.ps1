@@ -1,4 +1,5 @@
-﻿import {
+$content = @'
+import {
   collection,
   getDocs,
   getDoc,
@@ -23,7 +24,7 @@ const REVIEWS_COLLECTION = "reviews";
 const USE_MOCK = true;
 
 export const api = {
-  // в”Ђв”Ђв”Ђ Products в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+  // ─── Products ───────────────────────────────────────────────────────────────
 
   getProducts: async (): Promise<Product[]> => {
     if (USE_MOCK) return mockApi.getProducts();
@@ -91,7 +92,7 @@ export const api = {
     }
   },
 
-  // в”Ђв”Ђв”Ђ Reviews в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+  // ─── Reviews ────────────────────────────────────────────────────────────────
 
   getReviewsByProductId: async (productId: string): Promise<Review[]> => {
     const q = query(collection(db, REVIEWS_COLLECTION), where("productId", "==", productId));
@@ -99,7 +100,7 @@ export const api = {
     return snap.docs.map(d => ({ id: d.id, ...d.data() })) as Review[];
   },
 
-  // в”Ђв”Ђв”Ђ Orders в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+  // ─── Orders ─────────────────────────────────────────────────────────────────
 
   createOrder: async (orderPayload: Partial<Order>): Promise<string> => {
     const now = new Date().toISOString();
@@ -161,7 +162,7 @@ export const api = {
     });
   },
 
-  // в”Ђв”Ђв”Ђ Seed в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђ
+  // ─── Seed ───────────────────────────────────────────────────────────────────
 
   seedInitialData: async (): Promise<void> => {
     const MOCK_PRODUCTS: Partial<Product>[] = [
@@ -173,3 +174,6 @@ export const api = {
     await batch.commit();
   },
 };
+'@
+Set-Content -Path "src/lib/api.ts" -Value $content -Encoding UTF8
+Write-Host "api.ts written"

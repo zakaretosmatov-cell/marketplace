@@ -1,7 +1,7 @@
 ﻿"use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth, Role } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { ShoppingBag, Store, Shield, Check, LogOut } from "lucide-react";
@@ -33,7 +33,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const [switching, setSwitching] = useState(false);
 
-  const handleSwitch = async (newRole) => {
+  const handleSwitch = async (newRole: Role) => {
     if (newRole === role || switching) return;
     setSwitching(true);
     try {
@@ -111,3 +111,4 @@ export default function ProfilePage() {
     </ProtectedRoute>
   );
 }
+

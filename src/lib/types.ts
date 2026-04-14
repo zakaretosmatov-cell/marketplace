@@ -24,20 +24,32 @@ export interface Review {
   createdAt: string;
 }
 
+export interface OrderStatusEvent {
+  status: Order['status'];
+  timestamp: string;
+  note?: string;
+}
+
 export interface Order {
   id: string;
   userId: string;
+  userEmail?: string;
   items: {
     productId: string;
     productName: string;
     price: number;
     quantity: number;
     sellerId: string;
+    image?: string;
   }[];
   totalAmount: number;
   status: 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   shippingAddress: string;
   createdAt: string;
+  updatedAt?: string;
+  statusHistory?: OrderStatusEvent[];
+  trackingNumber?: string;
+  notes?: string;
 }
 
 export interface User {

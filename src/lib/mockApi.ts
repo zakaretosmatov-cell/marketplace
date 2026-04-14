@@ -233,7 +233,7 @@ export const mockApi = {
   addProduct: async (product: Partial<Product>): Promise<string> => {
     return new Promise((resolve) => setTimeout(() => {
       const newProduct = {
-        id: `p${MOCK_PRODUCTS.length + 1}`,
+        id: `p${Date.now()}`,
         rating: 0,
         reviewsCount: 0,
         ...product
@@ -241,6 +241,20 @@ export const mockApi = {
       MOCK_PRODUCTS = [...MOCK_PRODUCTS, newProduct];
       resolve(newProduct.id);
     }, 600));
+  },
+
+  updateProduct: async (id: string, data: Partial<Product>): Promise<void> => {
+    return new Promise((resolve) => setTimeout(() => {
+      MOCK_PRODUCTS = MOCK_PRODUCTS.map(p => p.id === id ? { ...p, ...data } : p);
+      resolve();
+    }, 600));
+  },
+
+  deleteProduct: async (id: string): Promise<void> => {
+    return new Promise((resolve) => setTimeout(() => {
+      MOCK_PRODUCTS = MOCK_PRODUCTS.filter(p => p.id !== id);
+      resolve();
+    }, 400));
   }
 };
 

@@ -1,8 +1,8 @@
-'use client';
+﻿'use client';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
-import { Search, ShoppingCart, User, Heart, Compass, LogOut } from 'lucide-react';
+import { Search, ShoppingCart, User, Heart, Compass, LogOut, ClipboardList } from 'lucide-react';
 
 export default function Header() {
   const { user, role, logout, isLoading } = useAuth();
@@ -77,6 +77,7 @@ export default function Header() {
         {/* Navigation Actions */}
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <nav style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginRight: '0.5rem' }}>
+            <Link href="/orders" className="pill-button" style={{ color: "var(--text-secondary)" }}>Orders</Link>
             <Link href="/catalog" className="pill-button" style={{ 
               backgroundColor: 'var(--accent-soft)', 
               color: 'var(--accent-color)',
@@ -186,3 +187,4 @@ export default function Header() {
     </header>
   );
 }
+
