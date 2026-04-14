@@ -118,6 +118,84 @@ let MOCK_PRODUCTS: Product[] = [
     sellerId: 's2',
     rating: 4.8,
     reviewsCount: 64
+  },
+  {
+    id: 'p10',
+    name: 'Samsung QN900D Neo QLED 8K 85"',
+    description: 'Neo QLED 8K with NQ8 AI Gen3 processor. Quantum Matrix Technology Pro, Real Depth Enhancer, 8K AI Upscaling. The pinnacle of Samsung TV technology.',
+    price: 7999.99,
+    stock: 5,
+    image: 'https://images.unsplash.com/photo-1593359677879-a4bb92f4834c?w=800&q=80',
+    category: 'TVs',
+    brand: 'Samsung',
+    sellerId: 's2',
+    rating: 4.9,
+    reviewsCount: 38
+  },
+  {
+    id: 'p11',
+    name: 'LG G4 OLED evo 77"',
+    description: 'OLED evo Gallery Edition with MLA technology. α11 AI Processor 4K, Brightness Booster Ultimate, Dolby Vision IQ & Atmos. Perfect blacks, infinite contrast.',
+    price: 3499.99,
+    stock: 8,
+    image: 'https://images.unsplash.com/photo-1461151304267-38535e780c79?w=800&q=80',
+    category: 'TVs',
+    brand: 'LG',
+    sellerId: 's3',
+    rating: 4.9,
+    reviewsCount: 72
+  },
+  {
+    id: 'p12',
+    name: 'Sony BRAVIA XR A95L QD-OLED 65"',
+    description: 'QD-OLED with Cognitive Processor XR. XR Triluminos Max, Acoustic Surface Audio+, HDMI 2.1 for 4K 120Hz gaming. The most lifelike picture Sony has ever made.',
+    price: 2999.99,
+    stock: 10,
+    image: 'https://images.unsplash.com/photo-1567690187548-f07b1d7bf5a9?w=800&q=80',
+    category: 'TVs',
+    brand: 'Sony',
+    sellerId: 's3',
+    rating: 4.8,
+    reviewsCount: 95
+  },
+  {
+    id: 'p13',
+    name: 'Samsung S95D QD-OLED 55"',
+    description: 'QD-OLED with NQ4 AI Gen2 processor. Glare-Free technology, 144Hz refresh rate, AMD FreeSync Premium Pro. Ideal for gaming and cinematic content.',
+    price: 1799.99,
+    stock: 12,
+    image: 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=800&q=80',
+    category: 'TVs',
+    brand: 'Samsung',
+    sellerId: 's2',
+    rating: 4.8,
+    reviewsCount: 54
+  },
+  {
+    id: 'p14',
+    name: 'LG C4 OLED 65"',
+    description: 'OLED evo with α9 AI Processor 4K Gen7. 120Hz, G-Sync & FreeSync, Dolby Vision & Atmos, 4 HDMI 2.1 ports. Best-in-class OLED for gamers and movie lovers.',
+    price: 1599.99,
+    stock: 15,
+    image: 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=800&q=80',
+    category: 'TVs',
+    brand: 'LG',
+    sellerId: 's3',
+    rating: 4.9,
+    reviewsCount: 187
+  },
+  {
+    id: 'p15',
+    name: 'TCL QM891G Mini-LED QLED 75"',
+    description: '4K Mini-LED QLED with AiPQ Ultra Engine. 5000 nits peak brightness, 240Hz, Dolby Vision IQ, Google TV. Premium performance at an unbeatable price.',
+    price: 1299.99,
+    stock: 18,
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80',
+    category: 'TVs',
+    brand: 'TCL',
+    sellerId: 's4',
+    rating: 4.7,
+    reviewsCount: 43
   }
 ];
 
