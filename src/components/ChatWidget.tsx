@@ -49,7 +49,7 @@ export default function ChatWidget() {
     } catch {
       setMessages(prev => [...prev, { 
         sender: 'agent', 
-        text: 'Aloqa uzildi. Iltimos qayta urinib ko\\'ring.' 
+        text: "Aloqa uzildi. Iltimos qayta urinib ko'ring." 
       }]);
     } finally {
       setIsLoading(false);
