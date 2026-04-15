@@ -22,20 +22,38 @@ export default function ChatWidget() {
   // Only show to actual shoppers, not admin/seller
   if (!user || role !== 'client') return null;
 
-  const handleSend = (e: React.FormEvent) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
 
-    setMessages(prev => [...prev, { sender: 'user', text: input }]);
+    const userMessage = { sender: 'user' as const, text: input };
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInput('');
+    setIsLoading(true);
 
-    // Mock seller response
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: newMessages })
+      });
+      const data = await res.json();
+      
       setMessages(prev => [...prev, { 
         sender: 'agent', 
-        text: 'Thanks for reaching out! We are currently checking your request. A seller will respond shortly.' 
+        text: data.text || 'Kechirasiz, muammo yuz berdi.' 
       }]);
-    }, 1000);
+    } catch {
+      setMessages(prev => [...prev, { 
+        sender: 'agent', 
+        text: 'Aloqa uzildi. Iltimos qayta urinib ko\\'ring.' 
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -110,11 +128,25 @@ export default function ChatWidget() {
                 borderBottomRightRadius: msg.sender === 'user' ? '0' : '1rem',
                 borderBottomLeftRadius: msg.sender === 'agent' ? '0' : '1rem',
                 maxWidth: '80%',
-                fontSize: '0.875rem'
+                fontSize: '0.875rem',
+                whiteSpace: 'pre-wrap'
               }}>
                 {msg.text}
               </div>
             ))}
+            {isLoading && (
+              <div style={{
+                alignSelf: 'flex-start',
+                backgroundColor: 'var(--bg-tertiary)',
+                color: 'var(--text-secondary)',
+                padding: '0.75rem 1rem',
+                borderRadius: '1rem',
+                borderBottomLeftRadius: '0',
+                fontSize: '0.875rem'
+              }}>
+                Typing...
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
 
