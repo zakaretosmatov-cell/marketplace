@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect, useMemo } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { api } from "@/lib/api";
@@ -229,8 +229,8 @@ export default function SellerPage() {
                   </select>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                  <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Image URL *</label>
-                  <input required style={inp} value={form.image || ""} onChange={e => setForm(f => ({ ...f, image: e.target.value }))} placeholder="https://..." />
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Product Image *</label>
+                  <ImageUpload value={form.image || ""} onChange={(url) => setForm(f => ({ ...f, image: url }))} />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Price ($) *</label>
