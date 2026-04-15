@@ -19,10 +19,10 @@ export default function ChatWidget() {
     }
   }, [messages, isOpen]);
 
+  const [isLoading, setIsLoading] = useState(false);
+
   // Only show to actual shoppers, not admin/seller
   if (!user || role !== 'client') return null;
-
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
