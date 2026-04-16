@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ChatWidget from '@/components/ChatWidget';
+import AdBanner from '@/components/AdBanner';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import { WishlistProvider } from '@/context/WishlistContext';
@@ -27,6 +28,7 @@ export default function RootLayout({
               <WishlistProvider>
                 <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
                   <Header />
+                  <AdBanner />
                   <main style={{ flex: 1, padding: '2rem 0' }}>
                     {children}
                   </main>

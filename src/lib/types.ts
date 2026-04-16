@@ -1,3 +1,32 @@
+export interface Ad {
+  id: string;
+  sellerId: string;
+  sellerEmail?: string;
+  productId: string;
+  productName: string;
+  productImage: string;
+  productPrice: number;
+  startDate: string;
+  endDate: string;
+  days: number;
+  totalCost: number;
+  status: 'pending' | 'approved' | 'rejected' | 'expired';
+  adminNote?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface Address {
+  id: string;
+  label: string;
+  fullName: string;
+  phone: string;
+  street: string;
+  city: string;
+  country: string;
+  isDefault: boolean;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -17,6 +46,8 @@ export interface Product {
 export interface Review {
   id: string;
   productId: string;
+  productName?: string;
+  sellerId?: string;
   userId: string;
   userName: string;
   rating: number;
@@ -34,6 +65,7 @@ export interface Order {
   id: string;
   userId: string;
   userEmail?: string;
+  sellerIds?: string[];
   items: {
     productId: string;
     productName: string;

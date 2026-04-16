@@ -1,31 +1,49 @@
 ﻿"use client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Product } from "@/lib/types";
 import { api } from "@/lib/api";
 import ProductCard from "@/components/ProductCard";
 import CategoryTree from "@/components/CategoryTree";
 import { CATEGORY_TREE, getAllIds } from "@/lib/categories";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, X, ChevronDown, Star } from "lucide-react";
 
-export default function CatalogPage() {
+type SortKey = "newest" | "price-asc" | "price-desc" | "rating" | "name";
+
+function CatalogContent() {
+  const searchParams = useSearchParams();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [selectedCat, setSelectedCat] = useState<string | null>(null);
+  const [search, setSearch] = useState(searchParams.get("q") || "");
+  const [selectedCat, setSelectedCat] = useState<string | null>(searchParams.get("cat"));
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [priceMin, setPriceMin] = useState("");
+  const [priceMax, setPriceMax] = useState("");
+  const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
+  const [minRating, setMinRating] = useState(0);
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>("newest");
 
   useEffect(() => {
     api.getProducts().then(data => { setProducts(data); setLoading(false); });
   }, []);
 
+  const brands = useMemo(() => Array.from(new Set(products.map(p => p.brand))).sort(), [products]);
+
+  const priceRange = useMemo(() => {
+    if (!products.length) return { min: 0, max: 10000 };
+    return { min: Math.floor(Math.min(...products.map(p => p.price))), max: Math.ceil(Math.max(...products.map(p => p.price))) };
+  }, [products]);
+
   const filtered = useMemo(() => {
-    let list = products;
+    let list = [...products];
+
     if (selectedCat) {
-      // find the node and get all descendant ids
       const findNode = (nodes: typeof CATEGORY_TREE, id: string): typeof CATEGORY_TREE[0] | null => {
         for (const n of nodes) {
           if (n.id === id) return n;
-          if (n.children) { const found = findNode(n.children, id); if (found) return found; }
+          if (n.children) { const f = findNode(n.children, id); if (f) return f; }
         }
         return null;
       };
@@ -33,101 +51,215 @@ export default function CatalogPage() {
       const ids = node ? getAllIds(node) : [selectedCat];
       list = list.filter(p => ids.includes(p.category));
     }
-    if (search) {
-      const q = search.toLowerCase();
-      list = list.filter(p => p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
-    }
-    return list;
-  }, [products, selectedCat, search]);
 
-  const Sidebar = () => (
-    <div style={{ width: "220px", flexShrink: 0 }}>
-      <div style={{ position: "sticky", top: "calc(var(--header-height) + 1rem)" }}>
+    if (search.trim()) {
+      const q = search.toLowerCase().trim();
+      list = list.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.brand.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q)
+      );
+    }
+
+    const min = parseFloat(priceMin);
+    const max = parseFloat(priceMax);
+    if (!isNaN(min)) list = list.filter(p => p.price >= min);
+    if (!isNaN(max)) list = list.filter(p => p.price <= max);
+
+    if (selectedBrands.size > 0) list = list.filter(p => selectedBrands.has(p.brand));
+    if (minRating > 0) list = list.filter(p => p.rating >= minRating);
+    if (inStockOnly) list = list.filter(p => p.stock > 0);
+
+    switch (sortKey) {
+      case "price-asc": list.sort((a, b) => a.price - b.price); break;
+      case "price-desc": list.sort((a, b) => b.price - a.price); break;
+      case "rating": list.sort((a, b) => b.rating - a.rating); break;
+      case "name": list.sort((a, b) => a.name.localeCompare(b.name)); break;
+      default: list.sort((a, b) => b.reviewsCount - a.reviewsCount);
+    }
+
+    return list;
+  }, [products, selectedCat, search, priceMin, priceMax, selectedBrands, minRating, inStockOnly, sortKey]);
+
+  const toggleBrand = (brand: string) => {
+    setSelectedBrands(prev => {
+      const next = new Set(prev);
+      next.has(brand) ? next.delete(brand) : next.add(brand);
+      return next;
+    });
+  };
+
+  const clearFilters = () => {
+    setSearch(""); setSelectedCat(null); setPriceMin(""); setPriceMax("");
+    setSelectedBrands(new Set()); setMinRating(0); setInStockOnly(false); setSortKey("newest");
+  };
+
+  const hasFilters = !!(search || selectedCat || priceMin || priceMax || selectedBrands.size > 0 || minRating > 0 || inStockOnly);
+  const activeCount = [search, selectedCat, priceMin || priceMax, selectedBrands.size > 0, minRating > 0, inStockOnly].filter(Boolean).length;
+
+  const inp = { padding: "0.45rem 0.6rem", borderRadius: "0.375rem", border: "1px solid var(--border-color)", background: "var(--bg-primary)", color: "var(--text-primary)", fontSize: "0.8rem", width: "100%" };
+
+  const SidebarContent = () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+
+      {/* Categories */}
+      <div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-          <p style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-secondary)" }}>Categories</p>
-          {selectedCat && (
-            <button onClick={() => setSelectedCat(null)} style={{ fontSize: "0.75rem", color: "var(--accent-color)", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.2rem" }}>
-              <X size={12} /> Clear
-            </button>
-          )}
+          <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-secondary)" }}>Categories</p>
+          {selectedCat && <button onClick={() => setSelectedCat(null)} style={{ fontSize: "0.7rem", color: "var(--accent-color)", background: "none", border: "none", cursor: "pointer" }}>Clear</button>}
         </div>
-        <div
-          onClick={() => setSelectedCat(null)}
-          style={{ padding: "0.4rem 0.75rem", borderRadius: "0.375rem", fontSize: "0.875rem", cursor: "pointer", fontWeight: !selectedCat ? 600 : 400, color: !selectedCat ? "var(--accent-color)" : "var(--text-secondary)", backgroundColor: !selectedCat ? "var(--accent-soft)" : "transparent", marginBottom: "0.25rem" }}
-        >
+        <div onClick={() => setSelectedCat(null)} style={{ padding: "0.4rem 0.75rem", borderRadius: "0.375rem", fontSize: "0.8rem", cursor: "pointer", fontWeight: !selectedCat ? 600 : 400, color: !selectedCat ? "var(--accent-color)" : "var(--text-secondary)", background: !selectedCat ? "var(--accent-soft)" : "transparent", marginBottom: "0.25rem" }}>
           All Products
         </div>
         <CategoryTree nodes={CATEGORY_TREE} selected={selectedCat} onSelect={setSelectedCat} />
       </div>
+
+      {/* Price */}
+      <div style={{ paddingTop: "1rem", borderTop: "1px solid var(--border-color)" }}>
+        <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-secondary)", marginBottom: "0.75rem" }}>Price Range</p>
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          <input value={priceMin} onChange={e => setPriceMin(e.target.value)} placeholder={`$${priceRange.min}`} type="number" min="0" style={inp} />
+          <span style={{ color: "var(--text-tertiary)", flexShrink: 0 }}>—</span>
+          <input value={priceMax} onChange={e => setPriceMax(e.target.value)} placeholder={`$${priceRange.max}`} type="number" min="0" style={inp} />
+        </div>
+      </div>
+
+      {/* Rating */}
+      <div style={{ paddingTop: "1rem", borderTop: "1px solid var(--border-color)" }}>
+        <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-secondary)", marginBottom: "0.75rem" }}>Min Rating</p>
+        <div style={{ display: "flex", gap: "0.4rem" }}>
+          {[0, 3, 4, 4.5].map(r => (
+            <button key={r} onClick={() => setMinRating(r === minRating ? 0 : r)}
+              style={{ padding: "0.3rem 0.6rem", borderRadius: "var(--radius-sm)", border: "1px solid var(--border-color)", background: minRating === r && r > 0 ? "var(--accent-color)" : "var(--bg-secondary)", color: minRating === r && r > 0 ? "var(--bg-primary)" : "var(--text-secondary)", fontSize: "0.75rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.2rem" }}>
+              {r === 0 ? "Any" : <><Star size={10} fill="#f59e0b" color="#f59e0b" />{r}+</>}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Brands */}
+      <div style={{ paddingTop: "1rem", borderTop: "1px solid var(--border-color)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+          <p style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-secondary)" }}>Brands</p>
+          {selectedBrands.size > 0 && <button onClick={() => setSelectedBrands(new Set())} style={{ fontSize: "0.7rem", color: "var(--accent-color)", background: "none", border: "none", cursor: "pointer" }}>Clear</button>}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", maxHeight: "200px", overflowY: "auto" }}>
+          {brands.map(b => (
+            <label key={b} style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontSize: "0.8rem", padding: "0.15rem 0" }}>
+              <input type="checkbox" checked={selectedBrands.has(b)} onChange={() => toggleBrand(b)} style={{ width: "14px", height: "14px", cursor: "pointer", accentColor: "var(--accent-color)" }} />
+              <span style={{ color: selectedBrands.has(b) ? "var(--text-primary)" : "var(--text-secondary)" }}>{b}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Stock */}
+      <div style={{ paddingTop: "1rem", borderTop: "1px solid var(--border-color)" }}>
+        <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontSize: "0.8rem" }}>
+          <input type="checkbox" checked={inStockOnly} onChange={e => setInStockOnly(e.target.checked)} style={{ width: "14px", height: "14px", cursor: "pointer", accentColor: "var(--accent-color)" }} />
+          <span>In stock only</span>
+        </label>
+      </div>
+
+      {hasFilters && (
+        <button onClick={clearFilters} style={{ padding: "0.5rem 0.875rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", background: "var(--bg-secondary)", color: "var(--text-secondary)", fontSize: "0.8rem", cursor: "pointer" }}>
+          Clear all filters
+        </button>
+      )}
     </div>
   );
 
   return (
-    <div className="container" style={{ padding: "2rem 0" }}>
+    <div className="container" style={{ padding: "2rem 1.5rem" }}>
 
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem", flexWrap: "wrap", gap: "1rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
         <div>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Catalog</h1>
-          <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", marginTop: "0.2rem" }}>
-            {loading ? "Loading..." : filtered.length + " products" + (selectedCat ? " in " + selectedCat : "")}
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Catalog</h1>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.8rem", marginTop: "0.2rem" }}>
+            {loading ? "Loading..." : `${filtered.length} products${selectedCat ? ` in ${selectedCat}` : ""}`}
           </p>
         </div>
         <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", border: "1px solid var(--border-color)", borderRadius: "0.5rem", padding: "0.6rem 1rem", background: "var(--bg-secondary)", minWidth: "260px" }}>
-            <Search size={16} color="var(--text-tertiary)" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products..." style={{ background: "none", border: "none", color: "var(--text-primary)", width: "100%", fontSize: "0.875rem" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", border: "1px solid var(--border-color)", borderRadius: "var(--radius-md)", padding: "0.55rem 0.875rem", background: "var(--bg-secondary)", minWidth: "280px" }}>
+            <Search size={15} color="var(--text-tertiary)" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, brand, category..." style={{ background: "none", border: "none", color: "var(--text-primary)", width: "100%", fontSize: "0.875rem" }} />
             {search && <button onClick={() => setSearch("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", display: "flex" }}><X size={14} /></button>}
           </div>
-          {/* Mobile filter toggle */}
-          <button onClick={() => setSidebarOpen(o => !o)} style={{ display: "none", padding: "0.6rem", border: "1px solid var(--border-color)", borderRadius: "0.5rem", background: "var(--bg-secondary)", cursor: "pointer", color: "var(--text-primary)" }} className="mobile-filter-btn">
-            <SlidersHorizontal size={18} />
+          <button onClick={() => setSidebarOpen(o => !o)} className="mobile-filter-btn"
+            style={{ padding: "0.55rem 0.875rem", border: "1px solid var(--border-color)", borderRadius: "var(--radius-md)", background: hasFilters ? "var(--accent-color)" : "var(--bg-secondary)", cursor: "pointer", color: hasFilters ? "var(--bg-primary)" : "var(--text-primary)", display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.875rem", fontWeight: 500 }}>
+            <SlidersHorizontal size={16} />
+            Filters {activeCount > 0 && `(${activeCount})`}
           </button>
         </div>
       </div>
 
+      {/* Active filter chips */}
+      {hasFilters && (
+        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+          {search && <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", padding: "0.25rem 0.6rem", borderRadius: "var(--radius-pill)", background: "var(--bg-tertiary)", fontSize: "0.75rem", fontWeight: 500 }}>Search: "{search}" <button onClick={() => setSearch("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", lineHeight: 1 }}>×</button></span>}
+          {selectedCat && <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", padding: "0.25rem 0.6rem", borderRadius: "var(--radius-pill)", background: "var(--bg-tertiary)", fontSize: "0.75rem", fontWeight: 500 }}>{selectedCat} <button onClick={() => setSelectedCat(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", lineHeight: 1 }}>×</button></span>}
+          {(priceMin || priceMax) && <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", padding: "0.25rem 0.6rem", borderRadius: "var(--radius-pill)", background: "var(--bg-tertiary)", fontSize: "0.75rem", fontWeight: 500 }}>${priceMin || "0"} — ${priceMax || "∞"} <button onClick={() => { setPriceMin(""); setPriceMax(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", lineHeight: 1 }}>×</button></span>}
+          {Array.from(selectedBrands).map(b => <span key={b} style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", padding: "0.25rem 0.6rem", borderRadius: "var(--radius-pill)", background: "var(--bg-tertiary)", fontSize: "0.75rem", fontWeight: 500 }}>{b} <button onClick={() => toggleBrand(b)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", lineHeight: 1 }}>×</button></span>)}
+          {minRating > 0 && <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", padding: "0.25rem 0.6rem", borderRadius: "var(--radius-pill)", background: "var(--bg-tertiary)", fontSize: "0.75rem", fontWeight: 500 }}><Star size={10} fill="#f59e0b" color="#f59e0b" />{minRating}+ <button onClick={() => setMinRating(0)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", lineHeight: 1 }}>×</button></span>}
+          {inStockOnly && <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", padding: "0.25rem 0.6rem", borderRadius: "var(--radius-pill)", background: "var(--bg-tertiary)", fontSize: "0.75rem", fontWeight: 500 }}>In stock <button onClick={() => setInStockOnly(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", lineHeight: 1 }}>×</button></span>}
+          <button onClick={clearFilters} style={{ padding: "0.25rem 0.6rem", borderRadius: "var(--radius-pill)", background: "none", border: "1px solid var(--border-color)", fontSize: "0.75rem", cursor: "pointer", color: "var(--text-secondary)" }}>Clear all</button>
+        </div>
+      )}
+
       <div style={{ display: "flex", gap: "2rem", alignItems: "flex-start" }}>
-        {/* Sidebar desktop */}
-        <div className="catalog-sidebar">
-          <Sidebar />
+
+        {/* Desktop sidebar */}
+        <div className="catalog-sidebar" style={{ width: "240px", flexShrink: 0 }}>
+          <SidebarContent />
         </div>
 
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
-          <div style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex" }}>
-            <div style={{ flex: 1, background: "rgba(0,0,0,0.4)" }} onClick={() => setSidebarOpen(false)} />
-            <div style={{ width: "260px", background: "var(--bg-primary)", padding: "1.5rem", overflowY: "auto", borderLeft: "1px solid var(--border-color)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                <p style={{ fontWeight: 700 }}>Categories</p>
+          <div style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex" }} onClick={() => setSidebarOpen(false)}>
+            <div style={{ flex: 1, background: "rgba(0,0,0,0.4)" }} />
+            <div style={{ width: "300px", background: "var(--bg-primary)", padding: "1.5rem", overflowY: "auto", borderLeft: "1px solid var(--border-color)" }} onClick={e => e.stopPropagation()}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+                <p style={{ fontWeight: 700 }}>Filters {activeCount > 0 && `(${activeCount})`}</p>
                 <button onClick={() => setSidebarOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}><X size={18} /></button>
               </div>
-              <Sidebar />
+              <SidebarContent />
             </div>
           </div>
         )}
 
-        {/* Products grid */}
+        {/* Products */}
         <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+            <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{filtered.length} result{filtered.length !== 1 ? "s" : ""}</p>
+            <div style={{ position: "relative" }}>
+              <select value={sortKey} onChange={e => setSortKey(e.target.value as SortKey)}
+                style={{ padding: "0.4rem 2rem 0.4rem 0.75rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", background: "var(--bg-primary)", color: "var(--text-primary)", fontSize: "0.8rem", cursor: "pointer", appearance: "none", fontWeight: 500 }}>
+                <option value="newest">Most Popular</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+                <option value="rating">Top Rated</option>
+                <option value="name">Name A–Z</option>
+              </select>
+              <ChevronDown size={13} color="var(--text-tertiary)" style={{ position: "absolute", right: "0.5rem", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+            </div>
+          </div>
+
           {loading ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "1.5rem" }}>
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} style={{ height: "360px", borderRadius: "1rem", background: "var(--bg-secondary)", animation: "pulse 1.5s infinite" }} />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} style={{ height: "340px", borderRadius: "var(--radius-lg)", background: "var(--bg-secondary)", animation: "pulse 1.5s infinite" }} />
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div style={{ padding: "4rem", textAlign: "center", border: "1px solid var(--border-color)", borderRadius: "0.5rem" }}>
-              <p style={{ color: "var(--text-secondary)" }}>No products found{selectedCat ? " in this category" : ""}.</p>
-              {(selectedCat || search) && (
-                <button onClick={() => { setSelectedCat(null); setSearch(""); }} style={{ marginTop: "1rem", color: "var(--accent-color)", background: "none", border: "none", cursor: "pointer", fontSize: "0.875rem" }}>
-                  Clear filters
-                </button>
-              )}
+            <div style={{ padding: "4rem", textAlign: "center", border: "1px solid var(--border-color)", borderRadius: "var(--radius-lg)" }}>
+              <p style={{ color: "var(--text-secondary)", marginBottom: "1rem" }}>No products match your filters.</p>
+              {hasFilters && <button onClick={clearFilters} style={{ padding: "0.6rem 1.25rem", borderRadius: "var(--radius-md)", background: "var(--accent-color)", color: "var(--bg-primary)", fontWeight: 600, fontSize: "0.875rem", border: "none", cursor: "pointer" }}>Clear all filters</button>}
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "1.5rem" }}>
-              {filtered.map(product => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
+              {filtered.map(p => <ProductCard key={p.id} product={p} />)}
             </div>
           )}
         </div>
@@ -137,10 +269,18 @@ export default function CatalogPage() {
         .catalog-sidebar { display: block; }
         .mobile-filter-btn { display: none !important; }
         @media (max-width: 768px) {
-          .catalog-sidebar { display: none; }
+          .catalog-sidebar { display: none !important; }
           .mobile-filter-btn { display: flex !important; }
         }
       `}</style>
     </div>
+  );
+}
+
+export default function CatalogPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: "4rem", textAlign: "center" }}>Loading...</div>}>
+      <CatalogContent />
+    </Suspense>
   );
 }
