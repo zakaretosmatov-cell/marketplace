@@ -3,6 +3,10 @@ import { api } from '@/lib/api';
 
 export async function POST(req: Request) {
   try {
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json({ text: "AI yordamchi hozircha mavjud emas. Iltimos, to'g'ridan-to'g'ri bizning qo'llab-quvvatlash xizmatimizga murojaat qiling." });
+    }
+
     const { messages } = await req.json();
     
     // Fetch products
