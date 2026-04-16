@@ -17,6 +17,14 @@ function CatalogContent() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(searchParams.get("q") || "");
   const [selectedCat, setSelectedCat] = useState<string | null>(searchParams.get("cat"));
+
+  // Sync with URL params when they change
+  useEffect(() => {
+    const q = searchParams.get("q") || "";
+    const cat = searchParams.get("cat");
+    setSearch(q);
+    if (cat) setSelectedCat(cat);
+  }, [searchParams]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");

@@ -2,14 +2,24 @@
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
-import { Search, ShoppingCart, Heart, LogOut, Menu, X, Zap } from "lucide-react";
+import { Search, ShoppingCart, Heart, LogOut, X, Zap } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Header() {
   const { user, role, logout, isLoading } = useAuth();
   const { cartItems } = useCart();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/catalog?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   return (
     <header style={{
@@ -48,10 +58,20 @@ export default function Header() {
         </nav>
 
         {/* Search */}
-        <div style={{ flex: 1, maxWidth: "420px", margin: "0 auto", display: "flex", alignItems: "center", gap: "0.5rem", background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "var(--radius-md)", padding: "0.45rem 0.875rem" }}>
+        <form onSubmit={handleSearch} style={{ flex: 1, maxWidth: "420px", margin: "0 auto", display: "flex", alignItems: "center", gap: "0.5rem", background: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "var(--radius-md)", padding: "0.45rem 0.875rem" }}>
           <Search size={15} color="var(--text-tertiary)" />
-          <input placeholder="Search products..." style={{ background: "none", border: "none", color: "var(--text-primary)", width: "100%", fontSize: "0.875rem" }} />
-        </div>
+          <input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search products..."
+            style={{ background: "none", border: "none", color: "var(--text-primary)", width: "100%", fontSize: "0.875rem" }}
+          />
+          {searchQuery && (
+            <button type="button" onClick={() => setSearchQuery("")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", display: "flex", padding: 0 }}>
+              <X size={14} />
+            </button>
+          )}
+        </form>
 
         {/* Actions */}
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginLeft: "auto" }}>

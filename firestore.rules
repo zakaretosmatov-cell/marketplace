@@ -1,0 +1,106 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ──────────────────────────────────────────────────
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuth() && request.auth.uid == uid;
+    }
+
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isAuth() && getUserRole() == 'admin';
+    }
+
+    function isSeller() {
+      return isAuth() && (getUserRole() == 'seller' || getUserRole() == 'admin');
+    }
+
+    // ── Products ──────────────────────────────────────────────────────────
+    match /products/{productId} {
+      // Anyone can read products
+      allow read: if true;
+
+      // Only seller who owns it or admin can create/update/delete
+      allow create: if isSeller() && request.resource.data.sellerId == request.auth.uid;
+      allow update: if isSeller() && (
+        resource.data.sellerId == request.auth.uid || isAdmin()
+      );
+      allow delete: if isSeller() && (
+        resource.data.sellerId == request.auth.uid || isAdmin()
+      );
+    }
+
+    // ── Orders ────────────────────────────────────────────────────────────
+    match /orders/{orderId} {
+      // Client can read their own orders; seller can read orders with their sellerId; admin reads all
+      allow read: if isAuth() && (
+        resource.data.userId == request.auth.uid ||
+        request.auth.uid in resource.data.sellerIds ||
+        isAdmin()
+      );
+
+      // Only authenticated users can create orders (for themselves)
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+
+      // Only seller (for status updates) or admin can update
+      allow update: if isAuth() && (
+        request.auth.uid in resource.data.sellerIds || isAdmin()
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // ── Reviews ───────────────────────────────────────────────────────────
+    match /reviews/{reviewId} {
+      // Anyone can read reviews
+      allow read: if true;
+
+      // Only authenticated users can create (userId must match)
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+
+      // Only the author or admin can update/delete
+      allow update, delete: if isAuth() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+    }
+
+    // ── Users ─────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      // User can read/write their own doc; admin reads all
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+
+      // Addresses subcollection
+      match /addresses/{addressId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // ── Ads ───────────────────────────────────────────────────────────────
+    match /ads/{adId} {
+      // Anyone can read approved ads (for banner display)
+      allow read: if true;
+
+      // Only seller can create their own ad
+      allow create: if isSeller() && request.resource.data.sellerId == request.auth.uid;
+
+      // Seller can update their own pending ad; admin can update any
+      allow update: if isAuth() && (
+        (resource.data.sellerId == request.auth.uid && resource.data.status == 'pending') ||
+        isAdmin()
+      );
+
+      allow delete: if isAdmin();
+    }
+  }
+}
