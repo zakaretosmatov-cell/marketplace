@@ -3,12 +3,13 @@ import {
   query, where, orderBy, writeBatch, arrayUnion, runTransaction, increment
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { Product, Order, Review, OrderStatusEvent, Address, Ad } from "./types";
+import { Product, Order, Review, OrderStatusEvent, Address, Ad, Bundle } from "./types";
 
 const PRODUCTS_COL = "products";
 const ORDERS_COL   = "orders";
 const REVIEWS_COL  = "reviews";
 const ADS_COL      = "ads";
+const BUNDLES_COL  = "bundles";
 const USERS_COL    = "users";
 
 export const api = {
@@ -89,36 +90,24 @@ export const api = {
     const now = new Date().toISOString();
     const initialEvent: OrderStatusEvent = { status: "pending", timestamp: now, note: "Order placed" };
 
-    const orderId = await runTransaction(db, async (tx) => {
-      // 1. Check stock for every item
-      for (const item of payload.items || []) {
-        const productRef = doc(db, PRODUCTS_COL, item.productId);
-        const productSnap = await tx.get(productRef);
-        if (!productSnap.exists()) throw new Error(`Product ${item.productName} not found`);
-        const stock = productSnap.data().stock as number;
-        if (stock < item.quantity) throw new Error(`"${item.productName}" вЂ” only ${stock} left in stock`);
-      }
+    // Check stock availability
+    for (const item of payload.items || []) {
+      const productSnap = await getDoc(doc(db, PRODUCTS_COL, item.productId));
+      if (!productSnap.exists()) throw new Error(`Product "${item.productName}" not found`);
+      const stock = productSnap.data().stock as number;
+      if (stock < item.quantity) throw new Error(`"${item.productName}" - only ${stock} left in stock`);
+    }
 
-      // 2. Decrement stock
-      for (const item of payload.items || []) {
-        const productRef = doc(db, PRODUCTS_COL, item.productId);
-        tx.update(productRef, { stock: increment(-item.quantity) });
-      }
-
-      // 3. Create order
-      const orderRef = doc(collection(db, ORDERS_COL));
-      tx.set(orderRef, {
-        ...payload,
-        status: "pending",
-        createdAt: now,
-        updatedAt: now,
-        statusHistory: [initialEvent],
-      });
-
-      return orderRef.id;
+    // Create order
+    const orderRef = await addDoc(collection(db, ORDERS_COL), {
+      ...payload,
+      status: "pending",
+      createdAt: now,
+      updatedAt: now,
+      statusHistory: [initialEvent],
     });
 
-    return orderId;
+    return orderRef.id;
   },
 
   getOrdersByUser: async (userId: string): Promise<Order[]> => {
@@ -226,5 +215,39 @@ export const adApi = {
       updatedAt: new Date().toISOString(),
       ...(adminNote ? { adminNote } : {}),
     });
+  },
+};
+
+// ── Bundles ───────────────────────────────────────────────────────────────
+export const bundleApi = {
+  createBundle: async (bundle: Omit<Bundle, "id">): Promise<string> => {
+    const ref = await addDoc(collection(db, BUNDLES_COL), bundle);
+    return ref.id;
+  },
+
+  updateBundle: async (id: string, data: Partial<Bundle>): Promise<void> => {
+    await updateDoc(doc(db, BUNDLES_COL, id), data as Record<string, unknown>);
+  },
+
+  deleteBundle: async (id: string): Promise<void> => {
+    await deleteDoc(doc(db, BUNDLES_COL, id));
+  },
+
+  getBundlesBySeller: async (sellerId: string): Promise<Bundle[]> => {
+    const q = query(collection(db, BUNDLES_COL), where("sellerId", "==", sellerId), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })) as Bundle[];
+  },
+
+  getActiveBundles: async (): Promise<Bundle[]> => {
+    const q = query(collection(db, BUNDLES_COL), where("active", "==", true));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })) as Bundle[];
+  },
+
+  getBundleById: async (id: string): Promise<Bundle | undefined> => {
+    const snap = await getDoc(doc(db, BUNDLES_COL, id));
+    if (snap.exists()) return { id: snap.id, ...snap.data() } as Bundle;
+    return undefined;
   },
 };

@@ -8,8 +8,10 @@ import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
+import { useRecentlyViewed } from "@/context/RecentlyViewedContext";
 import ProductCard from "@/components/ProductCard";
 import { ShoppingCart, Heart, Star, ChevronRight, Truck, ShieldCheck, RefreshCw, Send, Lock } from "lucide-react";
+import StockAlert from "@/components/StockAlert";
 
 function StarRating({ value, onChange, size = 20 }: { value: number; onChange?: (v: number) => void; size?: number }) {
   const [hover, setHover] = useState(0);
@@ -36,6 +38,7 @@ export default function ProductDetailPage() {
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { addItem: addRecentlyViewed } = useRecentlyViewed();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);

@@ -1,16 +1,18 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { api } from '@/lib/api';
+import { Product } from '@/lib/types';
 
 export default function ChatWidget() {
   const { user, role } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{sender: 'user'|'agent', text: string}[]>([
-    { sender: 'agent', text: 'Hello! How can we help you today?' }
+    { sender: 'agent', text: "Salom! Qanday yordam bera olaman? Telefon, noutbuk yoki boshqa texnika haqida so'rang 😊" }
   ]);
   const [input, setInput] = useState('');
-  
-  // Ref for auto-scrolling
+  const [isLoading, setIsLoading] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -19,9 +21,13 @@ export default function ChatWidget() {
     }
   }, [messages, isOpen]);
 
-  const [isLoading, setIsLoading] = useState(false);
+  // Load products once when widget opens
+  useEffect(() => {
+    if (isOpen && products.length === 0) {
+      api.getProducts().then(setProducts).catch(() => {});
+    }
+  }, [isOpen, products.length]);
 
-  // Only show to actual shoppers, not admin/seller
   if (!user || role !== 'client') return null;
 
   const handleSend = async (e: React.FormEvent) => {
@@ -38,18 +44,23 @@ export default function ChatWidget() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages })
+        body: JSON.stringify({
+          messages: newMessages,
+          products: products.map(p => ({
+            name: p.name, price: p.price, category: p.category,
+            brand: p.brand, stock: p.stock
+          }))
+        })
       });
       const data = await res.json();
-      
-      setMessages(prev => [...prev, { 
-        sender: 'agent', 
-        text: data.text || 'Kechirasiz, muammo yuz berdi.' 
+      setMessages(prev => [...prev, {
+        sender: 'agent',
+        text: data.text || "Kechirasiz, muammo yuz berdi."
       }]);
     } catch {
-      setMessages(prev => [...prev, { 
-        sender: 'agent', 
-        text: "Aloqa uzildi. Iltimos qayta urinib ko'ring." 
+      setMessages(prev => [...prev, {
+        sender: 'agent',
+        text: "Aloqa uzildi. Iltimos qayta urinib ko'ring."
       }]);
     } finally {
       setIsLoading(false);
@@ -107,7 +118,7 @@ export default function ChatWidget() {
             justifyContent: 'space-between',
             alignItems: 'center'
           }}>
-            <h3 style={{ margin: 0, fontSize: '1.125rem' }}>Support Chat</h3>
+            <h3 style={{ margin: 0, fontSize: '1.125rem' }}>ZAZADO AI</h3>
             <button 
               onClick={() => setIsOpen(false)}
               style={{ color: 'white', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }}

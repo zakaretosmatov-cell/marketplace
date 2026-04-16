@@ -1,3 +1,19 @@
+export interface Bundle {
+  id: string;
+  sellerId: string;
+  title: string;
+  description: string;
+  productIds: string[];
+  productNames: string[];
+  productImages: string[];
+  originalPrice: number;
+  bundlePrice: number;
+  discountPercent: number;
+  stock: number;
+  active: boolean;
+  createdAt: string;
+}
+
 export interface Ad {
   id: string;
   sellerId: string;

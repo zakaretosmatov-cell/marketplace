@@ -2,27 +2,39 @@
 import { useEffect, useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Product } from "@/lib/types";
-import { api } from "@/lib/api";
+import { api, bundleApi } from "@/lib/api";
 import ProductCard from "@/components/ProductCard";
+import BundleCard from "@/components/BundleCard";
 import CategoryTree from "@/components/CategoryTree";
 import { CATEGORY_TREE, getAllIds } from "@/lib/categories";
 import { Search, SlidersHorizontal, X, ChevronDown, Star } from "lucide-react";
 
 type SortKey = "newest" | "price-asc" | "price-desc" | "rating" | "name";
 
+import { Bundle } from "@/lib/types";
+
 function CatalogContent() {
   const searchParams = useSearchParams();
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [bundles, setBundles] = useState<Bundle[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(searchParams.get("q") || "");
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
   const [selectedCat, setSelectedCat] = useState<string | null>(searchParams.get("cat"));
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // Sync with URL params when they change
   useEffect(() => {
     const q = searchParams.get("q") || "";
     const cat = searchParams.get("cat");
     setSearch(q);
+    setDebouncedSearch(q);
     if (cat) setSelectedCat(cat);
   }, [searchParams]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -34,7 +46,8 @@ function CatalogContent() {
   const [sortKey, setSortKey] = useState<SortKey>("newest");
 
   useEffect(() => {
-    api.getProducts().then(data => { setProducts(data); setLoading(false); });
+    Promise.all([api.getProducts(), bundleApi.getActiveBundles()])
+      .then(([p, b]) => { setProducts(p); setBundles(b); setLoading(false); });
   }, []);
 
   const brands = useMemo(() => Array.from(new Set(products.map(p => p.brand))).sort(), [products]);
@@ -60,8 +73,8 @@ function CatalogContent() {
       list = list.filter(p => ids.includes(p.category));
     }
 
-    if (search.trim()) {
-      const q = search.toLowerCase().trim();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase().trim();
       list = list.filter(p =>
         p.name.toLowerCase().includes(q) ||
         p.brand.toLowerCase().includes(q) ||
@@ -88,7 +101,7 @@ function CatalogContent() {
     }
 
     return list;
-  }, [products, selectedCat, search, priceMin, priceMax, selectedBrands, minRating, inStockOnly, sortKey]);
+  }, [products, selectedCat, debouncedSearch, priceMin, priceMax, selectedBrands, minRating, inStockOnly, sortKey]);
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands(prev => {
@@ -253,6 +266,18 @@ function CatalogContent() {
               <ChevronDown size={13} color="var(--text-tertiary)" style={{ position: "absolute", right: "0.5rem", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
             </div>
           </div>
+
+          {/* Bundles section */}
+          {!loading && bundles.length > 0 && !debouncedSearch && !selectedCat && (
+            <div style={{ marginBottom: "2rem" }}>
+              <h2 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                🎁 Bundle Deals
+              </h2>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1rem" }}>
+                {bundles.map(b => <BundleCard key={b.id} bundle={b} />)}
+              </div>
+            </div>
+          )}
 
           {loading ? (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>

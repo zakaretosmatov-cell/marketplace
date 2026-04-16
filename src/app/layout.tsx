@@ -8,6 +8,8 @@ import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ToastProvider } from '@/context/ToastContext';
+import { ThemeProvider } from '@/context/ThemeContext';
+import { RecentlyViewedProvider } from '@/context/RecentlyViewedContext';
 
 export const metadata: Metadata = {
   title: 'TechNova',
@@ -24,19 +26,23 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <ToastProvider>
-            <CartProvider>
-              <WishlistProvider>
-                <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-                  <Header />
-                  <AdBanner />
-                  <main style={{ flex: 1, padding: '2rem 0' }}>
-                    {children}
-                  </main>
-                  <Footer />
-                </div>
-                <ChatWidget />
-              </WishlistProvider>
-            </CartProvider>
+            <ThemeProvider>
+              <CartProvider>
+                <WishlistProvider>
+                  <RecentlyViewedProvider>
+                    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+                      <Header />
+                      <AdBanner />
+                      <main style={{ flex: 1, padding: '2rem 0' }}>
+                        {children}
+                      </main>
+                      <Footer />
+                    </div>
+                    <ChatWidget />
+                  </RecentlyViewedProvider>
+                </WishlistProvider>
+              </CartProvider>
+            </ThemeProvider>
           </ToastProvider>
         </AuthProvider>
       </body>

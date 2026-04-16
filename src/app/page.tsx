@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Product } from "@/lib/types";
 import { api } from "@/lib/api";
 import ProductCard from "@/components/ProductCard";
-import { ArrowRight, Truck, ShieldCheck, RefreshCw, Headphones, ChevronRight } from "lucide-react";
+import { useRecentlyViewed } from "@/context/RecentlyViewedContext";
+import { ArrowRight, Truck, ShieldCheck, RefreshCw, Headphones, ChevronRight, Clock } from "lucide-react";
 
 const CATEGORIES = [
   { label: "Smartphones", icon: "рџ“±", id: "iOS" },
@@ -27,6 +28,7 @@ const FEATURES = [
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const { items: recentlyViewed } = useRecentlyViewed();
 
   useEffect(() => {
     api.getProducts().then(data => { setProducts(data); setLoading(false); });
@@ -154,6 +156,19 @@ export default function Home() {
           <div style={{ fontSize: "8rem", opacity: 0.15 }}>рџ›ЌпёЏ</div>
         </div>
       </section>
+      {/* Recently Viewed */}
+      {recentlyViewed.length > 0 && (
+        <section className="container" style={{ padding: "3rem 1.5rem 0" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+            <h2 style={{ fontSize: "1.25rem", fontWeight: 700, letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <Clock size={18} color="var(--text-tertiary)" /> Recently Viewed
+            </h2>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
+            {recentlyViewed.slice(0, 4).map(p => <ProductCard key={p.id} product={p} />)}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

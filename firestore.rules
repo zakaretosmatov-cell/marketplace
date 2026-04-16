@@ -2,7 +2,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Helper functions ──────────────────────────────────────────────────
     function isAuth() {
       return request.auth != null;
     }
@@ -23,12 +22,9 @@ service cloud.firestore {
       return isAuth() && (getUserRole() == 'seller' || getUserRole() == 'admin');
     }
 
-    // ── Products ──────────────────────────────────────────────────────────
+    // Products — anyone reads, seller/admin writes
     match /products/{productId} {
-      // Anyone can read products
       allow read: if true;
-
-      // Only seller who owns it or admin can create/update/delete
       allow create: if isSeller() && request.resource.data.sellerId == request.auth.uid;
       allow update: if isSeller() && (
         resource.data.sellerId == request.auth.uid || isAdmin()
@@ -38,69 +34,60 @@ service cloud.firestore {
       );
     }
 
-    // ── Orders ────────────────────────────────────────────────────────────
+    // Orders — client creates own, seller/admin reads & updates
     match /orders/{orderId} {
-      // Client can read their own orders; seller can read orders with their sellerId; admin reads all
       allow read: if isAuth() && (
         resource.data.userId == request.auth.uid ||
-        request.auth.uid in resource.data.sellerIds ||
+        (resource.data.sellerIds is list && request.auth.uid in resource.data.sellerIds) ||
         isAdmin()
       );
-
-      // Only authenticated users can create orders (for themselves)
       allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-
-      // Only seller (for status updates) or admin can update
       allow update: if isAuth() && (
-        request.auth.uid in resource.data.sellerIds || isAdmin()
+        (resource.data.sellerIds is list && request.auth.uid in resource.data.sellerIds) ||
+        isAdmin()
       );
-
       allow delete: if isAdmin();
     }
 
-    // ── Reviews ───────────────────────────────────────────────────────────
+    // Reviews — anyone reads, verified buyer creates
     match /reviews/{reviewId} {
-      // Anyone can read reviews
       allow read: if true;
-
-      // Only authenticated users can create (userId must match)
       allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-
-      // Only the author or admin can update/delete
       allow update, delete: if isAuth() && (
         resource.data.userId == request.auth.uid || isAdmin()
       );
     }
 
-    // ── Users ─────────────────────────────────────────────────────────────
+    // Users — own doc + addresses
     match /users/{userId} {
-      // User can read/write their own doc; admin reads all
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
 
-      // Addresses subcollection
       match /addresses/{addressId} {
         allow read, write: if isOwner(userId) || isAdmin();
       }
     }
 
-    // ── Ads ───────────────────────────────────────────────────────────────
+    // Ads — anyone reads, seller creates own, admin approves
     match /ads/{adId} {
-      // Anyone can read approved ads (for banner display)
       allow read: if true;
-
-      // Only seller can create their own ad
       allow create: if isSeller() && request.resource.data.sellerId == request.auth.uid;
-
-      // Seller can update their own pending ad; admin can update any
       allow update: if isAuth() && (
         (resource.data.sellerId == request.auth.uid && resource.data.status == 'pending') ||
         isAdmin()
       );
-
       allow delete: if isAdmin();
+    }
+
+    // Bundles — anyone reads active, seller manages own
+    match /bundles/{bundleId} {
+      allow read: if true;
+      allow create: if isSeller() && request.resource.data.sellerId == request.auth.uid;
+      allow update, delete: if isSeller() && (
+        resource.data.sellerId == request.auth.uid || isAdmin()
+      );
     }
   }
 }

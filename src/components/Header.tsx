@@ -2,13 +2,15 @@
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
-import { Search, ShoppingCart, Heart, LogOut, X, Zap } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
+import { Search, ShoppingCart, Heart, LogOut, X, Zap, Sun, Moon } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function Header() {
   const { user, role, logout, isLoading } = useAuth();
   const { cartItems } = useCart();
+  const { isDark, setTheme } = useTheme();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -48,7 +50,7 @@ export default function Header() {
             { href: "/catalog", label: "Catalog" },
             { href: "/orders", label: "Orders" },
             ...(role === "admin" ? [{ href: "/admin", label: "Admin" }, { href: "/admin/ads", label: "Ad Requests" }] : []),
-            ...(role === "seller" ? [{ href: "/seller", label: "Seller" }, { href: "/seller/orders", label: "My Orders" }, { href: "/seller/reviews", label: "Reviews" }, { href: "/seller/ads", label: "Ads" }] : []),
+            ...(role === "seller" ? [{ href: "/seller", label: "Seller" }, { href: "/seller/orders", label: "My Orders" }, { href: "/seller/reviews", label: "Reviews" }, { href: "/seller/ads", label: "Ads" }, { href: "/seller/bundles", label: "Bundles" }] : []),
           ].map(({ href, label }) => (
             <Link key={href} href={href} style={{ padding: "0.4rem 0.75rem", borderRadius: "var(--radius-md)", fontSize: "0.875rem", fontWeight: 500, color: "var(--text-secondary)", transition: "all 0.15s" }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--bg-secondary)"; (e.currentTarget as HTMLElement).style.color = "var(--text-primary)"; }}
@@ -75,6 +77,13 @@ export default function Header() {
 
         {/* Actions */}
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginLeft: "auto" }}>
+          {/* Dark mode toggle */}
+          <button onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            style={{ width: "36px", height: "36px", borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-color)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--text-secondary)" }}
+            title={isDark ? "Light mode" : "Dark mode"}
+          >
+            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
           <Link href="/wishlist" style={{ width: "36px", height: "36px", borderRadius: "var(--radius-md)", background: "var(--bg-secondary)", border: "1px solid var(--border-color)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)" }}>
             <Heart size={17} />
           </Link>
