@@ -216,9 +216,8 @@ export const adApi = {
     const today = new Date().toISOString().split("T")[0];
     const q = query(collection(db, ADS_COL), where("status", "==", "approved"));
     const snap = await getDocs(q);
-    return snap.docs
-      .map(d => ({ id: d.id, ...d.data() })) as Ad[]
-      .filter(ad => ad.startDate <= today && ad.endDate >= today);
+    const all = snap.docs.map(d => ({ id: d.id, ...d.data() })) as Ad[];
+    return all.filter(ad => ad.startDate <= today && ad.endDate >= today);
   },
 
   updateAdStatus: async (id: string, status: Ad["status"], adminNote?: string): Promise<void> => {
