@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
@@ -90,7 +90,7 @@ export default function CheckoutPage() {
 
     try {
       const addrStr = `${selectedAddress.fullName}, ${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.country}`;
-      const sellerIds = [...new Set(cartItems.map(i => i.sellerId))];
+      const sellerIds = Array.from(new Set(cartItems.map(i => i.sellerId)));
 
       const id = await api.createOrder({
         userId: user.uid,
