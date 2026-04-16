@@ -3,8 +3,8 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { useTheme } from "@/context/ThemeContext";
-import { Search, ShoppingCart, Heart, LogOut, X, Zap, Sun, Moon } from "lucide-react";
-import { useState } from "react";
+import { Search, ShoppingCart, Heart, LogOut, X, Zap, Sun, Moon, Camera } from "lucide-react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 export default function Header() {
@@ -14,12 +14,40 @@ export default function Header() {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [visualSearching, setVisualSearching] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/catalog?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleVisualSearch = async (file: File) => {
+    setVisualSearching(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = (e.target?.result as string).split(',')[1];
+        const mimeType = file.type;
+
+        const res = await fetch('/api/visual-search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageBase64: base64, mimeType })
+        });
+        const data = await res.json();
+        if (data.query) {
+          setSearchQuery(data.query);
+          router.push(`/catalog?q=${encodeURIComponent(data.query)}`);
+        }
+        setVisualSearching(false);
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      setVisualSearching(false);
     }
   };
 
@@ -73,6 +101,17 @@ export default function Header() {
               <X size={14} />
             </button>
           )}
+          <button type="button" onClick={() => fileInputRef.current?.click()}
+            title="Search by image"
+            style={{ background: "none", border: "none", cursor: visualSearching ? "not-allowed" : "pointer", color: visualSearching ? "var(--accent-color)" : "var(--text-tertiary)", display: "flex", padding: 0, flexShrink: 0 }}>
+            {visualSearching ? (
+              <div style={{ width: "15px", height: "15px", border: "2px solid var(--border-color)", borderTopColor: "var(--accent-color)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+            ) : (
+              <Camera size={15} />
+            )}
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }}
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleVisualSearch(f); e.target.value = ''; }} />
         </form>
 
         {/* Actions */}
