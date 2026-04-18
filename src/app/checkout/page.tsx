@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
-import { api } from "@/lib/api";
+import { api, promoApi } from "@/lib/api";
 import { Address } from "@/lib/types";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { MapPin, CreditCard, CheckCircle, Plus, ChevronRight, Lock, Package } from "lucide-react";
@@ -37,6 +37,24 @@ export default function CheckoutPage() {
   // Fake card
   const [card, setCard] = useState({ number: "", expiry: "", cvv: "", name: "" });
   const [processing, setProcessing] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [promoId, setPromoId] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+
+  const applyPromo = async () => {
+    if (!promoCode.trim()) return;
+    setPromoLoading(true);
+    const result = await promoApi.validateCode(promoCode);
+    if (result.valid) {
+      setPromoDiscount(result.discount);
+      setPromoId(result.promoId);
+      showToast(`Promo applied! ${result.discount}% off`, "success");
+    } else {
+      showToast("Invalid or expired promo code", "error");
+    }
+    setPromoLoading(false);
+  };
   const [orderId, setOrderId] = useState("");
 
   useEffect(() => {

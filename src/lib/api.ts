@@ -1,5 +1,5 @@
 import {
-  collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc,
+  collection, getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc, setDoc,
   query, where, orderBy, writeBatch, arrayUnion, runTransaction, increment
 } from "firebase/firestore";
 import { db } from "./firebase";
@@ -249,5 +249,132 @@ export const bundleApi = {
     const snap = await getDoc(doc(db, BUNDLES_COL, id));
     if (snap.exists()) return { id: snap.id, ...snap.data() } as Bundle;
     return undefined;
+  },
+};
+
+// ── Promo Codes ───────────────────────────────────────────────────────────
+const PROMOS_COL = "promoCodes";
+const RETURNS_COL = "returns";
+const SELLERS_COL = "sellerProfiles";
+
+export const promoApi = {
+  validateCode: async (code: string): Promise<{ valid: boolean; discount: number; promoId: string }> => {
+    const q = query(collection(db, PROMOS_COL), where("code", "==", code.toUpperCase()), where("active", "==", true));
+    const snap = await getDocs(q);
+    if (snap.empty) return { valid: false, discount: 0, promoId: "" };
+    const promo = snap.docs[0].data() as import("./types").PromoCode;
+    const id = snap.docs[0].id;
+    if (promo.usedCount >= promo.maxUses) return { valid: false, discount: 0, promoId: "" };
+    if (new Date(promo.expiresAt) < new Date()) return { valid: false, discount: 0, promoId: "" };
+    return { valid: true, discount: promo.discountPercent, promoId: id };
+  },
+
+  useCode: async (promoId: string): Promise<void> => {
+    await updateDoc(doc(db, PROMOS_COL, promoId), { usedCount: increment(1) });
+  },
+
+  getAllCodes: async (): Promise<import("./types").PromoCode[]> => {
+    const snap = await getDocs(collection(db, PROMOS_COL));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })) as import("./types").PromoCode[];
+  },
+
+  createCode: async (data: Omit<import("./types").PromoCode, "id">): Promise<string> => {
+    const ref = await addDoc(collection(db, PROMOS_COL), data);
+    return ref.id;
+  },
+
+  deleteCode: async (id: string): Promise<void> => {
+    await deleteDoc(doc(db, PROMOS_COL, id));
+  },
+};
+
+// ── Returns ───────────────────────────────────────────────────────────────
+export const returnApi = {
+  createReturn: async (data: Omit<import("./types").ReturnRequest, "id">): Promise<string> => {
+    const ref = await addDoc(collection(db, RETURNS_COL), data);
+    return ref.id;
+  },
+
+  getReturnsByUser: async (userId: string): Promise<import("./types").ReturnRequest[]> => {
+    const q = query(collection(db, RETURNS_COL), where("userId", "==", userId), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })) as import("./types").ReturnRequest[];
+  },
+
+  getAllReturns: async (): Promise<import("./types").ReturnRequest[]> => {
+    const q = query(collection(db, RETURNS_COL), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })) as import("./types").ReturnRequest[];
+  },
+
+  updateReturnStatus: async (id: string, status: import("./types").ReturnRequest["status"], adminNote?: string): Promise<void> => {
+    await updateDoc(doc(db, RETURNS_COL, id), { status, updatedAt: new Date().toISOString(), ...(adminNote ? { adminNote } : {}) });
+  },
+};
+
+// ── Seller Verification ───────────────────────────────────────────────────
+export const sellerApi = {
+  applyForSeller: async (data: Omit<import("./types").SellerProfile, "verificationStatus" | "verifiedAt">): Promise<void> => {
+    await setDoc(doc(db, SELLERS_COL, data.uid), { ...data, verificationStatus: "pending" });
+  },
+
+  getSellerProfile: async (uid: string): Promise<import("./types").SellerProfile | undefined> => {
+    const snap = await getDoc(doc(db, SELLERS_COL, uid));
+    if (snap.exists()) return snap.data() as import("./types").SellerProfile;
+    return undefined;
+  },
+
+  getAllSellerApplications: async (): Promise<import("./types").SellerProfile[]> => {
+    const snap = await getDocs(collection(db, SELLERS_COL));
+    return snap.docs.map(d => d.data()) as import("./types").SellerProfile[];
+  },
+
+  updateSellerStatus: async (uid: string, status: "approved" | "rejected"): Promise<void> => {
+    await updateDoc(doc(db, SELLERS_COL, uid), {
+      verificationStatus: status,
+      ...(status === "approved" ? { verifiedAt: new Date().toISOString() } : {})
+    });
+    // Also update user role in users collection
+    if (status === "approved") {
+      await updateDoc(doc(db, "users", uid), { role: "seller" });
+    } else {
+      await updateDoc(doc(db, "users", uid), { role: "client" });
+    }
+  },
+
+  getSellerStats: async (sellerId: string): Promise<{ totalOrders: number; totalRevenue: number; totalProducts: number; recentOrders: import("./types").Order[] }> => {
+    const [orders, products] = await Promise.all([
+      getDocs(query(collection(db, "orders"), where("sellerIds", "array-contains", sellerId))),
+      getDocs(query(collection(db, "products"), where("sellerId", "==", sellerId))),
+    ]);
+    const allOrders = orders.docs.map(d => ({ id: d.id, ...d.data() })) as import("./types").Order[];
+    const revenue = allOrders
+      .filter(o => o.status !== "cancelled")
+      .reduce((s, o) => {
+        const myItems = o.items.filter(i => i.sellerId === sellerId);
+        return s + myItems.reduce((ss, i) => ss + i.price * i.quantity, 0);
+      }, 0);
+    return {
+      totalOrders: allOrders.length,
+      totalRevenue: Math.round(revenue * 100) / 100,
+      totalProducts: products.size,
+      recentOrders: allOrders.slice(0, 5),
+    };
+  },
+};
+
+// ── Admin User Management ─────────────────────────────────────────────────
+export const adminApi = {
+  getAllUsers: async (): Promise<{ uid: string; email: string; role: string; createdAt: string; blocked?: boolean }[]> => {
+    const snap = await getDocs(collection(db, "users"));
+    return snap.docs.map(d => ({ uid: d.id, ...d.data() })) as { uid: string; email: string; role: string; createdAt: string; blocked?: boolean }[];
+  },
+
+  blockUser: async (uid: string, blocked: boolean): Promise<void> => {
+    await updateDoc(doc(db, "users", uid), { blocked });
+  },
+
+  setUserRole: async (uid: string, role: string): Promise<void> => {
+    await updateDoc(doc(db, "users", uid), { role });
   },
 };

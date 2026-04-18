@@ -1,3 +1,38 @@
+export interface PromoCode {
+  id: string;
+  code: string;
+  discountPercent: number;
+  maxUses: number;
+  usedCount: number;
+  expiresAt: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface ReturnRequest {
+  id: string;
+  orderId: string;
+  userId: string;
+  userEmail?: string;
+  items: { productId: string; productName: string; quantity: number; price: number }[];
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected' | 'completed';
+  adminNote?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface SellerProfile {
+  uid: string;
+  email: string;
+  displayName?: string;
+  verificationStatus: 'pending' | 'approved' | 'rejected';
+  businessName?: string;
+  phone?: string;
+  createdAt: string;
+  verifiedAt?: string;
+}
+
 export interface Bundle {
   id: string;
   sellerId: string;

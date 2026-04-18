@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -197,6 +198,12 @@ export default function OrderDetailPage() {
               ))}
             </div>
 
+            {order.status === "delivered" && (
+              <Link href={`/orders/return?orderId=${order.id}`}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", padding: "0.75rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", background: "var(--bg-secondary)", color: "var(--text-secondary)", fontSize: "0.875rem", fontWeight: 500, textDecoration: "none" }}>
+                <RefreshCw size={15} /> Request Return
+              </Link>
+            )}
             {canManage && order.status !== "delivered" && order.status !== "cancelled" && (
               <div style={{ border: "1px solid var(--border-color)", borderRadius: "0.5rem", padding: "1.25rem", background: "var(--bg-card)" }}>
                 <h2 style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-secondary)", marginBottom: "0.75rem" }}>Update Status</h2>

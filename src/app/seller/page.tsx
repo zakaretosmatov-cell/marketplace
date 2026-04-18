@@ -7,8 +7,10 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { Search, Plus, Pencil, Trash2, X, Package, ChevronDown } from "lucide-react";
 import ImageUpload from "@/components/ImageUpload";
+import CategoryTree from "@/components/CategoryTree";
+import { CATEGORY_TREE, flatIds } from "@/lib/categories";
 
-const CATEGORIES = ["Laptops", "Smartphones", "Tablets", "Wearables", "Audio", "TVs", "Other"];
+const CATEGORIES = flatIds(CATEGORY_TREE);
 
 const EMPTY: Partial<Product> = {
   name: "", description: "", price: 0, stock: 0,
@@ -224,9 +226,10 @@ export default function SellerPage() {
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Category *</label>
-                  <select required style={inp} value={form.category || "Laptops"} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <div style={{ border: "1px solid var(--border-color)", borderRadius: "0.5rem", padding: "0.5rem", maxHeight: "180px", overflowY: "auto", background: "var(--bg-primary)" }}>
+                    <CategoryTree nodes={CATEGORY_TREE} selected={form.category || null} onSelect={v => setForm(f => ({ ...f, category: v || "" }))} />
+                  </div>
+                  {form.category && <p style={{ fontSize: "0.75rem", color: "var(--accent-color)" }}>Selected: {form.category}</p>}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Product Image *</label>

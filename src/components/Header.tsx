@@ -77,8 +77,8 @@ export default function Header() {
           {[
             { href: "/catalog", label: "Catalog" },
             { href: "/orders", label: "Orders" },
-            ...(role === "admin" ? [{ href: "/admin", label: "Admin" }, { href: "/admin/ads", label: "Ad Requests" }] : []),
-            ...(role === "seller" ? [{ href: "/seller", label: "Seller" }, { href: "/seller/orders", label: "My Orders" }, { href: "/seller/reviews", label: "Reviews" }, { href: "/seller/ads", label: "Ads" }, { href: "/seller/bundles", label: "Bundles" }] : []),
+            ...(role === "admin" ? [{ href: "/admin", label: "Admin" }, { href: "/admin/ads", label: "Ads" }, { href: "/admin/sellers", label: "Sellers" }, { href: "/admin/users", label: "Users" }, { href: "/admin/promos", label: "Promos" }, { href: "/admin/returns", label: "Returns" }] : []),
+            ...(role === "seller" ? [{ href: "/seller", label: "Seller" }, { href: "/seller/analytics", label: "Analytics" }, { href: "/seller/orders", label: "Orders" }, { href: "/seller/reviews", label: "Reviews" }, { href: "/seller/ads", label: "Ads" }, { href: "/seller/bundles", label: "Bundles" }] : []),
           ].map(({ href, label }) => (
             <Link key={href} href={href} style={{ padding: "0.4rem 0.75rem", borderRadius: "var(--radius-md)", fontSize: "0.875rem", fontWeight: 500, color: "var(--text-secondary)", transition: "all 0.15s" }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--bg-secondary)"; (e.currentTarget as HTMLElement).style.color = "var(--text-primary)"; }}
