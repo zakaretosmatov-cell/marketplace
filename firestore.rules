@@ -22,7 +22,7 @@ service cloud.firestore {
       return isAuth() && (getUserRole() == 'seller' || getUserRole() == 'admin');
     }
 
-    // Products — anyone reads, authenticated users write own products
+    // Products
     match /products/{productId} {
       allow read: if true;
       allow create: if isAuth() && request.resource.data.sellerId == request.auth.uid;
@@ -30,7 +30,7 @@ service cloud.firestore {
       allow delete: if isAuth() && (resource.data.sellerId == request.auth.uid || isAdmin());
     }
 
-    // Orders — client creates own, seller/admin reads & updates
+    // Orders
     match /orders/{orderId} {
       allow read: if isAuth() && (
         resource.data.userId == request.auth.uid ||
@@ -45,16 +45,14 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Reviews — anyone reads, verified buyer creates
+    // Reviews
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isAuth() && (
-        resource.data.userId == request.auth.uid || isAdmin()
-      );
+      allow update, delete: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
-    // Users — own doc + addresses
+    // Users + addresses
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isOwner(userId);
@@ -66,10 +64,10 @@ service cloud.firestore {
       }
     }
 
-    // Ads — anyone reads, seller creates own, admin approves
+    // Ads
     match /ads/{adId} {
       allow read: if true;
-      allow create: if isSeller() && request.resource.data.sellerId == request.auth.uid;
+      allow create: if isAuth() && request.resource.data.sellerId == request.auth.uid;
       allow update: if isAuth() && (
         (resource.data.sellerId == request.auth.uid && resource.data.status == 'pending') ||
         isAdmin()
@@ -77,13 +75,32 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Bundles — anyone reads active, seller manages own
+    // Bundles
     match /bundles/{bundleId} {
       allow read: if true;
-      allow create: if isSeller() && request.resource.data.sellerId == request.auth.uid;
-      allow update, delete: if isSeller() && (
-        resource.data.sellerId == request.auth.uid || isAdmin()
-      );
+      allow create: if isAuth() && request.resource.data.sellerId == request.auth.uid;
+      allow update, delete: if isAuth() && (resource.data.sellerId == request.auth.uid || isAdmin());
+    }
+
+    // Promo Codes — admin only
+    match /promoCodes/{promoId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Returns
+    match /returns/{returnId} {
+      allow read: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Seller Profiles
+    match /sellerProfiles/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create, update: if isOwner(uid) || isAdmin();
+      allow delete: if isAdmin();
     }
   }
 }
