@@ -73,10 +73,10 @@ export default function ComparePage() {
                   {spec.label}
                 </td>
                 {items.map(p => {
-                  const val = (p as Record<string, unknown>)[spec.key];
+                  const val = (p as unknown as Record<string, unknown>)[spec.key];
                   const display = spec.format ? spec.format(val) : String(val ?? "—");
                   // Highlight best value for price (lowest) and rating (highest)
-                  const allVals = items.map(x => Number((x as Record<string, unknown>)[spec.key]) || 0);
+                  const allVals = items.map(x => Number((x as unknown as Record<string, unknown>)[spec.key]) || 0);
                   const isBest = spec.key === "price"
                     ? Number(val) === Math.min(...allVals)
                     : spec.key === "rating"
