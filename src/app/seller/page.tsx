@@ -244,6 +244,27 @@ export default function SellerPage() {
                   <input required type="number" min="0" style={inp} value={form.stock || 0} onChange={e => setForm(f => ({ ...f, stock: parseInt(e.target.value) }))} />
                 </div>
 
+                {/* Condition */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Condition</label>
+                  <select style={inp} value={form.condition || "new"} onChange={e => setForm(f => ({ ...f, condition: e.target.value as "new"|"used"|"refurbished" }))}>
+                    <option value="new">New</option>
+                    <option value="used">Used</option>
+                    <option value="refurbished">Refurbished</option>
+                  </select>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Original Price (for discount)</label>
+                  <input type="number" step="0.01" min="0" style={inp} value={form.originalPrice || ""} onChange={e => setForm(f => ({ ...f, originalPrice: e.target.value ? parseFloat(e.target.value) : undefined }))} placeholder="Leave empty if no discount" />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Flash Sale Price</label>
+                  <input type="number" step="0.01" min="0" style={inp} value={form.flashSalePrice || ""} onChange={e => setForm(f => ({ ...f, flashSalePrice: e.target.value ? parseFloat(e.target.value) : undefined }))} placeholder="Optional flash sale price" />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Flash Sale Ends At</label>
+                  <input type="datetime-local" style={inp} value={form.flashSaleEndsAt ? form.flashSaleEndsAt.slice(0,16) : ""} onChange={e => setForm(f => ({ ...f, flashSaleEndsAt: e.target.value ? new Date(e.target.value).toISOString() : undefined }))} />
+                </div>
                 {/* Colors */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", gridColumn: "span 2" }}>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Colors (optional)</label>

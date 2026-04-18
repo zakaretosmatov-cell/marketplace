@@ -10,6 +10,8 @@ import { WishlistProvider } from '@/context/WishlistContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { RecentlyViewedProvider } from '@/context/RecentlyViewedContext';
+import { CompareProvider } from '@/context/CompareContext';
+import CompareBar from '@/components/CompareBar';
 
 export const metadata: Metadata = {
   title: 'TechNova',
@@ -30,6 +32,7 @@ export default function RootLayout({
               <CartProvider>
                 <WishlistProvider>
                   <RecentlyViewedProvider>
+                  <CompareProvider>
                     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
                       <Header />
                       <AdBanner />
@@ -39,7 +42,9 @@ export default function RootLayout({
                       <Footer />
                     </div>
                     <ChatWidget />
-                  </RecentlyViewedProvider>
+                    <CompareBar />
+                  </CompareProvider>
+                </RecentlyViewedProvider>
                 </WishlistProvider>
               </CartProvider>
             </ThemeProvider>

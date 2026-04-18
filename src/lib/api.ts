@@ -26,6 +26,12 @@ export const api = {
     return undefined;
   },
 
+  incrementViews: async (id: string): Promise<void> => {
+    try {
+      await updateDoc(doc(db, PRODUCTS_COL, id), { views: increment(1) });
+    } catch { /* silent */ }
+  },
+
   getProductsBySeller: async (sellerId: string): Promise<Product[]> => {
     const q = query(collection(db, PRODUCTS_COL), where("sellerId", "==", sellerId));
     const snap = await getDocs(q);

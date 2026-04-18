@@ -83,6 +83,8 @@ export interface Product {
   name: string;
   description: string;
   price: number;
+  originalPrice?: number;
+  discountPercent?: number;
   stock: number;
   image: string;
   category: string;
@@ -92,6 +94,10 @@ export interface Product {
   reviewsCount: number;
   colors?: string[];
   sizes?: string[];
+  condition?: 'new' | 'used' | 'refurbished';
+  views?: number;
+  flashSalePrice?: number;
+  flashSaleEndsAt?: string;
 }
 
 export interface Review {
