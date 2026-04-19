@@ -237,6 +237,18 @@ export default function CheckoutPage() {
                   <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", marginTop: "0.25rem" }}>This is a demo вЂ” no real payment is processed</p>
                 </div>
 
+                {/* Promo Code */}
+                <div style={{ padding: "0 1.5rem 1rem" }}>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, display: "block", marginBottom: "0.4rem" }}>Promo Code</label>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <input value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} placeholder="SAVE20" style={{ ...inp, flex: 1, fontFamily: "monospace", letterSpacing: "0.05em" }} />
+                    <button type="button" onClick={applyPromo} disabled={promoLoading || !promoCode.trim()} style={{ padding: "0.65rem 1rem", borderRadius: "0.5rem", background: promoDiscount > 0 ? "var(--success)" : "var(--accent-color)", color: "var(--bg-primary)", fontWeight: 600, fontSize: "0.8rem", border: "none", cursor: "pointer", flexShrink: 0 }}>
+                      {promoLoading ? "..." : promoDiscount > 0 ? `${promoDiscount}% OFF` : "Apply"}
+                    </button>
+                  </div>
+                  {promoDiscount > 0 && <p style={{ fontSize: "0.75rem", color: "var(--success)", marginTop: "0.3rem" }}>Promo applied! {promoDiscount}% discount</p>}
+                </div>
+
                 {/* Fake card UI */}
                 <div style={{ padding: "1.5rem", background: "var(--bg-secondary)", margin: "1.5rem", borderRadius: "var(--radius-lg)", position: "relative", overflow: "hidden" }}>
                   <div style={{ position: "absolute", top: "-20px", right: "-20px", width: "120px", height: "120px", borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />

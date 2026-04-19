@@ -210,7 +210,15 @@ export default function ProductDetailPage() {
               <span style={{ padding: "0.6rem 1rem", fontWeight: 600, minWidth: "40px", textAlign: "center" }}>{qty}</span>
               <button onClick={() => setQty(Math.min(product.stock, qty + 1))} disabled={product.stock === 0} style={{ padding: "0.6rem 0.875rem", background: "var(--bg-secondary)", border: "none", cursor: "pointer", fontSize: "1rem" }}>+</button>
             </div>
-            <button onClick={() => isLiked ? removeFromWishlist(product.id) : addToWishlist(product)}
+            {/* Share */}
+          {typeof navigator !== "undefined" && navigator.share && (
+            <button onClick={() => navigator.share({ title: product.name, text: product.description, url: window.location.href })}
+              style={{ width: "42px", height: "42px", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", background: "var(--bg-primary)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--text-tertiary)", flexShrink: 0 }}
+              title="Share">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            </button>
+          )}
+          <button onClick={() => isLiked ? removeFromWishlist(product.id) : addToWishlist(product)}
               style={{ width: "42px", height: "42px", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", background: "var(--bg-primary)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: isLiked ? "var(--error)" : "var(--text-tertiary)", flexShrink: 0 }}>
               <Heart size={18} fill={isLiked ? "var(--error)" : "none"} />
             </button>

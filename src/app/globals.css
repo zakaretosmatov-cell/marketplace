@@ -197,3 +197,32 @@ input, textarea, select { font-family: var(--font-family); outline: none; }
 }
 
 .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+
+@keyframes cartBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-slide-up { animation: slideUp 0.3s ease forwards; }
+.animate-fade-scale { animation: fadeInScale 0.2s ease forwards; }
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .container { padding: 0 1rem; }
+  .hide-mobile { display: none !important; }
+}
+
+@media (max-width: 1024px) {
+  .hide-tablet { display: none !important; }
+}

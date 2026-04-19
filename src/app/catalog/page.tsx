@@ -19,6 +19,8 @@ function CatalogContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [bundles, setBundles] = useState<Bundle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
   const [search, setSearch] = useState(searchParams.get("q") || "");
   const [debouncedSearch, setDebouncedSearch] = useState(search);
   const [selectedCat, setSelectedCat] = useState<string | null>(searchParams.get("cat"));
@@ -114,10 +116,14 @@ function CatalogContent() {
   const clearFilters = () => {
     setSearch(""); setSelectedCat(null); setPriceMin(""); setPriceMax("");
     setSelectedBrands(new Set()); setMinRating(0); setInStockOnly(false); setSortKey("newest");
+    setPage(1);
   };
 
   const hasFilters = !!(search || selectedCat || priceMin || priceMax || selectedBrands.size > 0 || minRating > 0 || inStockOnly);
   const activeCount = [search, selectedCat, priceMin || priceMax, selectedBrands.size > 0, minRating > 0, inStockOnly].filter(Boolean).length;
+
+  const paginated = filtered.slice(0, page * PAGE_SIZE);
+  const hasMore = filtered.length > page * PAGE_SIZE;
 
   const inp = { padding: "0.45rem 0.6rem", borderRadius: "0.375rem", border: "1px solid var(--border-color)", background: "var(--bg-primary)", color: "var(--text-primary)", fontSize: "0.8rem", width: "100%" };
 
@@ -197,6 +203,12 @@ function CatalogContent() {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
         <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.75rem", color: "var(--text-tertiary)", marginBottom: "0.4rem" }}>
+            <a href="/" style={{ color: "var(--text-tertiary)" }}>Home</a>
+            <span>›</span>
+            <span style={{ color: "var(--text-secondary)" }}>Catalog</span>
+            {selectedCat && <><span>›</span><span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{selectedCat}</span></>}
+          </div>
           <h1 style={{ fontSize: "1.5rem", fontWeight: 700, letterSpacing: "-0.02em" }}>Catalog</h1>
           <p style={{ color: "var(--text-secondary)", fontSize: "0.8rem", marginTop: "0.2rem" }}>
             {loading ? "Loading..." : `${filtered.length} products${selectedCat ? ` in ${selectedCat}` : ""}`}
@@ -291,9 +303,19 @@ function CatalogContent() {
               {hasFilters && <button onClick={clearFilters} style={{ padding: "0.6rem 1.25rem", borderRadius: "var(--radius-md)", background: "var(--accent-color)", color: "var(--bg-primary)", fontWeight: 600, fontSize: "0.875rem", border: "none", cursor: "pointer" }}>Clear all filters</button>}
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
-              {filtered.map(p => <ProductCard key={p.id} product={p} />)}
-            </div>
+            <>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
+                {paginated.map(p => <ProductCard key={p.id} product={p} />)}
+              </div>
+              {hasMore && (
+                <div style={{ textAlign: "center", marginTop: "2rem" }}>
+                  <button onClick={() => setPage(p => p + 1)}
+                    style={{ padding: "0.75rem 2rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", background: "var(--bg-secondary)", color: "var(--text-primary)", fontWeight: 600, fontSize: "0.875rem", cursor: "pointer" }}>
+                    Load more ({filtered.length - paginated.length} remaining)
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -117,16 +117,17 @@ export const api = {
   },
 
   getOrdersByUser: async (userId: string): Promise<Order[]> => {
-    const q = query(collection(db, ORDERS_COL), where("userId", "==", userId), orderBy("createdAt", "desc"));
+    const q = query(collection(db, ORDERS_COL), where("userId", "==", userId));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() })) as Order[];
+    const orders = snap.docs.map(d => ({ id: d.id, ...d.data() })) as Order[];
+    return orders.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   },
 
   getOrdersBySeller: async (sellerId: string): Promise<Order[]> => {
-    // Orders that contain at least one item from this seller
-    const q = query(collection(db, ORDERS_COL), where("sellerIds", "array-contains", sellerId), orderBy("createdAt", "desc"));
+    const q = query(collection(db, ORDERS_COL), where("sellerIds", "array-contains", sellerId));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() })) as Order[];
+    const orders = snap.docs.map(d => ({ id: d.id, ...d.data() })) as Order[];
+    return orders.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   },
 
   getAllOrders: async (): Promise<Order[]> => {
@@ -196,9 +197,10 @@ export const adApi = {
   },
 
   getAdsBySeller: async (sellerId: string): Promise<Ad[]> => {
-    const q = query(collection(db, ADS_COL), where("sellerId", "==", sellerId), orderBy("createdAt", "desc"));
+    const q = query(collection(db, ADS_COL), where("sellerId", "==", sellerId));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() })) as Ad[];
+    const ads = snap.docs.map(d => ({ id: d.id, ...d.data() })) as Ad[];
+    return ads.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   },
 
   getAllAds: async (): Promise<Ad[]> => {
@@ -240,9 +242,10 @@ export const bundleApi = {
   },
 
   getBundlesBySeller: async (sellerId: string): Promise<Bundle[]> => {
-    const q = query(collection(db, BUNDLES_COL), where("sellerId", "==", sellerId), orderBy("createdAt", "desc"));
+    const q = query(collection(db, BUNDLES_COL), where("sellerId", "==", sellerId));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() })) as Bundle[];
+    const bundles = snap.docs.map(d => ({ id: d.id, ...d.data() })) as Bundle[];
+    return bundles.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   },
 
   getActiveBundles: async (): Promise<Bundle[]> => {
@@ -302,9 +305,10 @@ export const returnApi = {
   },
 
   getReturnsByUser: async (userId: string): Promise<import("./types").ReturnRequest[]> => {
-    const q = query(collection(db, RETURNS_COL), where("userId", "==", userId), orderBy("createdAt", "desc"));
+    const q = query(collection(db, RETURNS_COL), where("userId", "==", userId));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() })) as import("./types").ReturnRequest[];
+    const returns = snap.docs.map(d => ({ id: d.id, ...d.data() })) as import("./types").ReturnRequest[];
+    return returns.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   },
 
   getAllReturns: async (): Promise<import("./types").ReturnRequest[]> => {
@@ -382,5 +386,33 @@ export const adminApi = {
 
   setUserRole: async (uid: string, role: string): Promise<void> => {
     await updateDoc(doc(db, "users", uid), { role });
+  },
+};
+
+// ── Product Q&A ───────────────────────────────────────────────────────────
+const QA_COL = "productQA";
+
+export const qaApi = {
+  getQuestions: async (productId: string): Promise<{ id: string; productId: string; userId: string; userName: string; question: string; answer?: string; answeredAt?: string; createdAt: string }[]> => {
+    const q = query(collection(db, QA_COL), where("productId", "==", productId));
+    const snap = await getDocs(q);
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() })) as { id: string; productId: string; userId: string; userName: string; question: string; answer?: string; answeredAt?: string; createdAt: string }[];
+    return items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  },
+
+  askQuestion: async (data: { productId: string; sellerId: string; userId: string; userName: string; question: string }): Promise<string> => {
+    const ref = await addDoc(collection(db, QA_COL), { ...data, createdAt: new Date().toISOString() });
+    return ref.id;
+  },
+
+  answerQuestion: async (id: string, answer: string): Promise<void> => {
+    await updateDoc(doc(db, QA_COL, id), { answer, answeredAt: new Date().toISOString() });
+  },
+
+  getSellerQuestions: async (sellerId: string): Promise<{ id: string; productId: string; userId: string; userName: string; question: string; answer?: string; answeredAt?: string; createdAt: string; productName?: string }[]> => {
+    const q = query(collection(db, QA_COL), where("sellerId", "==", sellerId));
+    const snap = await getDocs(q);
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() })) as { id: string; productId: string; userId: string; userName: string; question: string; answer?: string; answeredAt?: string; createdAt: string; productName?: string }[];
+    return items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   },
 };

@@ -57,6 +57,27 @@ export default function SellerAnalyticsPage() {
               ))}
             </div>
 
+            {/* Mini bar chart — orders by status */}
+            {stats.recentOrders.length > 0 && (
+              <div style={{ border: "1px solid var(--border-color)", borderRadius: "var(--radius-lg)", padding: "1.5rem", marginBottom: "1.5rem", background: "var(--bg-card)" }}>
+                <h2 style={{ fontSize: "0.875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", marginBottom: "1.25rem" }}>Revenue Overview</h2>
+                <div style={{ display: "flex", alignItems: "flex-end", gap: "0.5rem", height: "80px" }}>
+                  {["pending","paid","processing","shipped","delivered","cancelled"].map(status => {
+                    const count = stats.recentOrders.filter(o => o.status === status).length;
+                    const max = Math.max(...["pending","paid","processing","shipped","delivered","cancelled"].map(s => stats.recentOrders.filter(o => o.status === s).length), 1);
+                    const colors: Record<string, string> = { pending: "#f59e0b", paid: "#3b82f6", processing: "#8b5cf6", shipped: "#06b6d4", delivered: "#10b981", cancelled: "#ef4444" };
+                    return (
+                      <div key={status} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "0.3rem" }}>
+                        <div style={{ width: "100%", height: `${(count / max) * 60 + 4}px`, background: colors[status], borderRadius: "0.25rem 0.25rem 0 0", minHeight: "4px", transition: "height 0.3s" }} />
+                        <span style={{ fontSize: "0.6rem", color: "var(--text-tertiary)", textTransform: "capitalize" }}>{status.slice(0,4)}</span>
+                        <span style={{ fontSize: "0.7rem", fontWeight: 700 }}>{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div style={{ border: "1px solid var(--border-color)", borderRadius: "var(--radius-lg)", overflow: "hidden", background: "var(--bg-card)" }}>
               <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid var(--border-color)", background: "var(--bg-secondary)" }}>
                 <h2 style={{ fontSize: "0.875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)" }}>Recent Orders</h2>
