@@ -38,14 +38,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
-    const savedCart = localStorage.getItem('mock_cart');
+    const savedCart = localStorage.getItem('technova_cart');
     if (savedCart) {
       setCartItems(JSON.parse(savedCart));
     }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('mock_cart', JSON.stringify(cartItems));
+    localStorage.setItem('technova_cart', JSON.stringify(cartItems));
   }, [cartItems]);
 
   const addToCart = (product: Product, quantity: number) => {

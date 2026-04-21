@@ -20,14 +20,14 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   const [wishlistItems, setWishlistItems] = useState<Product[]>([]);
 
   useEffect(() => {
-    const savedWishlist = localStorage.getItem('mock_wishlist');
+    const savedWishlist = localStorage.getItem('technova_wishlist');
     if (savedWishlist) {
       setWishlistItems(JSON.parse(savedWishlist));
     }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('mock_wishlist', JSON.stringify(wishlistItems));
+    localStorage.setItem('technova_wishlist', JSON.stringify(wishlistItems));
   }, [wishlistItems]);
 
   const addToWishlist = (product: Product) => {

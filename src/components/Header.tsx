@@ -66,10 +66,8 @@ export default function Header() {
 
         {/* Logo */}
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: 800, fontSize: "1.1rem", letterSpacing: "-0.03em", flexShrink: 0 }}>
-          <div style={{ width: "28px", height: "28px", background: "var(--accent-color)", borderRadius: "0.375rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Zap size={16} color="var(--bg-primary)" />
-          </div>
-          TechNova
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="TechNova" style={{ height: "36px", width: "auto", objectFit: "contain" }} />
         </Link>
 
         {/* Nav links вЂ” desktop */}

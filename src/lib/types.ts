@@ -33,6 +33,31 @@ export interface SellerProfile {
   verifiedAt?: string;
 }
 
+export interface Ticket {
+  id: string;
+  userId: string;
+  userEmail?: string;
+  sellerId?: string;
+  orderId?: string;
+  subject: string;
+  message: string;
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  adminNote?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface PlatformSettings {
+  commissionPercent: number;
+  sellerSubscriptionFee: number;
+  freeShippingThreshold: number;
+  maintenanceMode: boolean;
+  platformName: string;
+  supportEmail: string;
+  updatedAt?: string;
+}
+
 export interface Bundle {
   id: string;
   sellerId: string;

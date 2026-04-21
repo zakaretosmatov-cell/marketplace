@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Product, Review } from "@/lib/types";
-import { api } from "@/lib/api";
+import { api, qaApi } from "@/lib/api";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
@@ -48,6 +48,9 @@ export default function ProductDetailPage() {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [hasPurchased, setHasPurchased] = useState(false);
+  const [questions, setQuestions] = useState<{ id: string; userId: string; userName: string; question: string; answer?: string; createdAt: string }[]>([]);
+  const [qaInput, setQaInput] = useState("");
+  const [qaSubmitting, setQaSubmitting] = useState(false);
   const [alreadyReviewed, setAlreadyReviewed] = useState(false);
 
   const [reviewRating, setReviewRating] = useState(5);
