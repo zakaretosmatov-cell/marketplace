@@ -80,12 +80,28 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (!user || !productId) return;
     api.hasPurchasedProduct(user.uid, productId).then(setHasPurchased);
+    qaApi.getQuestions(productId).then(setQuestions).catch(() => {});
   }, [user, productId]);
 
   useEffect(() => {
     if (!user || reviews.length === 0) return;
     setAlreadyReviewed(reviews.some(r => r.userId === user.uid));
   }, [user, reviews]);
+
+  const handleAskQuestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !product) { showToast("Please sign in to ask a question", "error"); return; }
+    if (!qaInput.trim()) return;
+    setQaSubmitting(true);
+    try {
+      await qaApi.askQuestion({ productId: product.id, sellerId: product.sellerId, userId: user.uid, userName: user.displayName || user.email?.split("@")[0] || "User", question: qaInput.trim() });
+      const updated = await qaApi.getQuestions(product.id);
+      setQuestions(updated);
+      setQaInput("");
+      showToast("Question submitted!", "success");
+    } catch { showToast("Failed to submit question", "error"); }
+    finally { setQaSubmitting(false); }
+  };
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -344,6 +360,59 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
+
+      {/* Q&A Section */}
+      <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "3rem", marginBottom: "4rem" }}>
+        <h2 style={{ fontSize: "1.25rem", fontWeight: 700, letterSpacing: "-0.02em", marginBottom: "1.5rem" }}>Questions & Answers</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem", alignItems: "start" }}>
+          <div>
+            <h3 style={{ fontWeight: 700, fontSize: "0.9rem", marginBottom: "1rem" }}>Ask a Question</h3>
+            {!user ? (
+              <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>
+                <a href="/login" style={{ color: "var(--accent-color)", fontWeight: 600 }}>Sign in</a> to ask a question.
+              </p>
+            ) : (
+              <form onSubmit={handleAskQuestion} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                <textarea value={qaInput} onChange={e => setQaInput(e.target.value)} placeholder="What would you like to know about this product?"
+                  style={{ padding: "0.75rem", borderRadius: "0.5rem", border: "1px solid var(--border-color)", background: "var(--bg-primary)", color: "var(--text-primary)", fontSize: "0.875rem", resize: "vertical", minHeight: "80px", width: "100%" }} />
+                <button type="submit" disabled={qaSubmitting || !qaInput.trim()}
+                  style={{ alignSelf: "flex-start", display: "flex", alignItems: "center", gap: "0.4rem", padding: "0.6rem 1.25rem", borderRadius: "var(--radius-md)", background: "var(--accent-color)", color: "var(--bg-primary)", fontWeight: 600, fontSize: "0.875rem", border: "none", cursor: qaSubmitting || !qaInput.trim() ? "not-allowed" : "pointer", opacity: !qaInput.trim() ? 0.6 : 1 }}>
+                  <Send size={14} /> {qaSubmitting ? "Submitting..." : "Ask Question"}
+                </button>
+              </form>
+            )}
+          </div>
+          <div>
+            <h3 style={{ fontWeight: 700, fontSize: "0.9rem", marginBottom: "1rem" }}>
+              {questions.length > 0 ? questions.length + " Question" + (questions.length !== 1 ? "s" : "") : "No questions yet"}
+            </h3>
+            {questions.length === 0 ? (
+              <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>Be the first to ask a question about this product.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                {questions.map(q => (
+                  <div key={q.id} style={{ padding: "1rem", border: "1px solid var(--border-color)", borderRadius: "var(--radius-lg)", background: "var(--bg-card)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                      <div style={{ width: "26px", height: "26px", borderRadius: "50%", background: "var(--accent-soft)", color: "var(--accent-color)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: 700, flexShrink: 0 }}>
+                        {q.userName.charAt(0).toUpperCase()}
+                      </div>
+                      <span style={{ fontWeight: 600, fontSize: "0.8rem" }}>{q.userName}</span>
+                      <span style={{ fontSize: "0.7rem", color: "var(--text-tertiary)" }}>{new Date(q.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <p style={{ fontSize: "0.875rem", fontWeight: 500, marginBottom: q.answer ? "0.75rem" : 0 }}>Q: {q.question}</p>
+                    {q.answer && (
+                      <div style={{ padding: "0.625rem 0.875rem", background: "var(--accent-soft)", borderRadius: "var(--radius-sm)", borderLeft: "3px solid var(--accent-color)" }}>
+                        <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--accent-color)", marginBottom: "0.2rem" }}>Seller Answer</p>
+                        <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{q.answer}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
       {related.length > 0 && (
         <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "3rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>

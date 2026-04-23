@@ -27,11 +27,13 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [noteInput, setNoteInput] = useState("");
+  const [trackingInput, setTrackingInput] = useState("");
 
   useEffect(() => {
     if (!id) return;
     api.getOrderById(id as string).then(data => {
       setOrder(data || null);
+      if (data?.trackingNumber) setTrackingInput(data.trackingNumber);
       setLoading(false);
     });
   }, [id]);
@@ -44,6 +46,21 @@ export default function OrderDetailPage() {
       const updated = await api.getOrderById(order.id);
       setOrder(updated || null);
       setNoteInput("");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleSaveTracking = async () => {
+    if (!order || !trackingInput.trim()) return;
+    setUpdating(true);
+    try {
+      await api.updateOrderStatus(order.id, order.status, "Tracking number added: " + trackingInput.trim());
+      // Also save tracking number directly
+      const { doc: firestoreDoc, updateDoc: firestoreUpdate } = await import("firebase/firestore");
+      const { db } = await import("@/lib/firebase");
+      await firestoreUpdate(firestoreDoc(db, "orders", order.id), { trackingNumber: trackingInput.trim() });
+      setOrder(prev => prev ? { ...prev, trackingNumber: trackingInput.trim() } : null);
     } finally {
       setUpdating(false);
     }
@@ -180,9 +197,18 @@ export default function OrderDetailPage() {
                   <span style={{ fontFamily: "monospace", fontWeight: 600 }}>{order.trackingNumber}</span>
                 </div>
               )}
+              {canManage && (
+                <div style={{ marginTop: "0.75rem" }}>
+                  <label style={{ fontSize: "0.75rem", fontWeight: 600, display: "block", marginBottom: "0.3rem", color: "var(--text-secondary)" }}>Tracking Number</label>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <input value={trackingInput} onChange={e => setTrackingInput(e.target.value)} placeholder="e.g. 1Z999AA10123456784" style={{ ...inp, flex: 1, fontFamily: "monospace", fontSize: "0.8rem" }} />
+                    <button onClick={handleSaveTracking} disabled={updating || !trackingInput.trim()} style={{ padding: "0.5rem 0.75rem", borderRadius: "0.375rem", background: "var(--accent-color)", color: "var(--bg-primary)", fontSize: "0.8rem", fontWeight: 600, border: "none", cursor: updating ? "not-allowed" : "pointer", flexShrink: 0 }}>
+                      Save
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-
-            <div style={{ border: "1px solid var(--border-color)", borderRadius: "0.5rem", padding: "1.25rem", background: "var(--bg-card)" }}>
               <h2 style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-secondary)", marginBottom: "0.75rem" }}>Summary</h2>
               {[
                 { label: "Order ID", value: "#" + order.id.slice(-8).toUpperCase() },

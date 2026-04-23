@@ -33,14 +33,13 @@ export default function CheckoutPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newAddr, setNewAddr] = useState({ label: "Home", fullName: "", phone: "", street: "", city: "", country: "", isDefault: false });
   const [savingAddr, setSavingAddr] = useState(false);
-
-  // Fake card
   const [card, setCard] = useState({ number: "", expiry: "", cvv: "", name: "" });
   const [processing, setProcessing] = useState(false);
   const [promoCode, setPromoCode] = useState("");
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [promoId, setPromoId] = useState("");
   const [promoLoading, setPromoLoading] = useState(false);
+  const [orderId, setOrderId] = useState("");
 
   const applyPromo = async () => {
     if (!promoCode.trim()) return;
@@ -49,13 +48,12 @@ export default function CheckoutPage() {
     if (result.valid) {
       setPromoDiscount(result.discount);
       setPromoId(result.promoId);
-      showToast(`Promo applied! ${result.discount}% off`, "success");
+      showToast("Promo applied! " + result.discount + "% off", "success");
     } else {
       showToast("Invalid or expired promo code", "error");
     }
     setPromoLoading(false);
   };
-  const [orderId, setOrderId] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -73,7 +71,8 @@ export default function CheckoutPage() {
 
   const subtotal = totalAmount;
   const shipping = subtotal > 99 ? 0 : 9.99;
-  const total = subtotal + shipping;
+  const discountAmount = promoDiscount > 0 ? Math.round(subtotal * (promoDiscount / 100) * 100) / 100 : 0;
+  const total = Math.max(0, subtotal + shipping - discountAmount);
 
   const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,8 +81,7 @@ export default function CheckoutPage() {
     try {
       const id = await api.addAddress(user.uid, newAddr);
       const added = { ...newAddr, id };
-      const updated = [...addresses, added];
-      setAddresses(updated);
+      setAddresses(prev => [...prev, added]);
       setSelectedAddress(added);
       setShowAddForm(false);
       setNewAddr({ label: "Home", fullName: "", phone: "", street: "", city: "", country: "", isDefault: false });
@@ -102,14 +100,10 @@ export default function CheckoutPage() {
       return;
     }
     setProcessing(true);
-
-    // Simulate payment delay
     await new Promise(r => setTimeout(r, 1800));
-
     try {
-      const addrStr = `${selectedAddress.fullName}, ${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.country}`;
+      const addrStr = selectedAddress.fullName + ", " + selectedAddress.street + ", " + selectedAddress.city + ", " + selectedAddress.country;
       const sellerIds = Array.from(new Set(cartItems.map(i => i.sellerId)));
-
       const id = await api.createOrder({
         userId: user.uid,
         userEmail: user.email || "",
@@ -124,13 +118,14 @@ export default function CheckoutPage() {
         })),
         totalAmount: total,
         shippingAddress: addrStr,
+        ...(promoId ? { promoCode, promoDiscount: discountAmount } : {}),
       });
-
+      if (promoId) await promoApi.useCode(promoId);
       setOrderId(id);
       clearCart();
       setStep("confirm");
-    } catch (err: any) {
-      showToast(err.message || "Order failed. Please try again.", "error");
+    } catch (err: unknown) {
+      showToast((err as Error).message || "Order failed. Please try again.", "error");
     } finally {
       setProcessing(false);
     }
@@ -153,10 +148,10 @@ export default function CheckoutPage() {
       <div className="container" style={{ maxWidth: "960px", padding: "2rem 1.5rem" }}>
 
         {/* Steps */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0", marginBottom: "2.5rem" }}>
+        <div style={{ display: "flex", alignItems: "center", marginBottom: "2.5rem" }}>
           {steps.map((s, i) => (
             <div key={s.id} style={{ display: "flex", alignItems: "center", flex: i < steps.length - 1 ? 1 : "none" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 0.75rem", borderRadius: "var(--radius-md)", background: step === s.id ? "var(--accent-color)" : step === "confirm" || (step === "payment" && s.id === "address") ? "var(--bg-secondary)" : "var(--bg-secondary)", color: step === s.id ? "var(--bg-primary)" : "var(--text-secondary)", fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 0.75rem", borderRadius: "var(--radius-md)", background: step === s.id ? "var(--accent-color)" : "var(--bg-secondary)", color: step === s.id ? "var(--bg-primary)" : "var(--text-secondary)", fontSize: "0.8rem", fontWeight: 600, whiteSpace: "nowrap" }}>
                 {s.icon} {s.label}
               </div>
               {i < steps.length - 1 && <div style={{ flex: 1, height: "1px", background: "var(--border-color)", margin: "0 0.5rem" }} />}
@@ -168,7 +163,6 @@ export default function CheckoutPage() {
 
           {/* Left */}
           <div>
-
             {/* STEP 1: Address */}
             {step === "address" && (
               <div style={{ border: "1px solid var(--border-color)", borderRadius: "var(--radius-lg)", overflow: "hidden", background: "var(--bg-card)" }}>
@@ -207,10 +201,10 @@ export default function CheckoutPage() {
                   )}
                   {addresses.map(addr => (
                     <div key={addr.id} onClick={() => setSelectedAddress(addr)}
-                      style={{ padding: "1rem", borderRadius: "var(--radius-md)", border: `2px solid ${selectedAddress?.id === addr.id ? "var(--accent-color)" : "var(--border-color)"}`, cursor: "pointer", background: selectedAddress?.id === addr.id ? "var(--accent-soft)" : "var(--bg-primary)", transition: "all 0.15s" }}>
+                      style={{ padding: "1rem", borderRadius: "var(--radius-md)", border: "2px solid " + (selectedAddress?.id === addr.id ? "var(--accent-color)" : "var(--border-color)"), cursor: "pointer", background: selectedAddress?.id === addr.id ? "var(--accent-soft)" : "var(--bg-primary)", transition: "all 0.15s" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                         <div>
-                          <p style={{ fontWeight: 600, fontSize: "0.875rem", marginBottom: "0.2rem" }}>{addr.label} вЂ” {addr.fullName}</p>
+                          <p style={{ fontWeight: 600, fontSize: "0.875rem", marginBottom: "0.2rem" }}>{addr.label} &mdash; {addr.fullName}</p>
                           <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{addr.street}, {addr.city}, {addr.country}</p>
                           <p style={{ fontSize: "0.8rem", color: "var(--text-tertiary)" }}>{addr.phone}</p>
                         </div>
@@ -234,19 +228,19 @@ export default function CheckoutPage() {
               <form onSubmit={handlePayment} style={{ border: "1px solid var(--border-color)", borderRadius: "var(--radius-lg)", overflow: "hidden", background: "var(--bg-card)" }}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid var(--border-color)" }}>
                   <h2 style={{ fontWeight: 700, fontSize: "1rem" }}>Payment Details</h2>
-                  <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", marginTop: "0.25rem" }}>This is a demo вЂ” no real payment is processed</p>
+                  <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", marginTop: "0.25rem" }}>This is a demo &mdash; no real payment is processed</p>
                 </div>
 
                 {/* Promo Code */}
-                <div style={{ padding: "0 1.5rem 1rem" }}>
+                <div style={{ padding: "1.25rem 1.5rem 0" }}>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, display: "block", marginBottom: "0.4rem" }}>Promo Code</label>
                   <div style={{ display: "flex", gap: "0.5rem" }}>
                     <input value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} placeholder="SAVE20" style={{ ...inp, flex: 1, fontFamily: "monospace", letterSpacing: "0.05em" }} />
                     <button type="button" onClick={applyPromo} disabled={promoLoading || !promoCode.trim()} style={{ padding: "0.65rem 1rem", borderRadius: "0.5rem", background: promoDiscount > 0 ? "var(--success)" : "var(--accent-color)", color: "var(--bg-primary)", fontWeight: 600, fontSize: "0.8rem", border: "none", cursor: "pointer", flexShrink: 0 }}>
-                      {promoLoading ? "..." : promoDiscount > 0 ? `${promoDiscount}% OFF` : "Apply"}
+                      {promoLoading ? "..." : promoDiscount > 0 ? promoDiscount + "% OFF" : "Apply"}
                     </button>
                   </div>
-                  {promoDiscount > 0 && <p style={{ fontSize: "0.75rem", color: "var(--success)", marginTop: "0.3rem" }}>Promo applied! {promoDiscount}% discount</p>}
+                  {promoDiscount > 0 && <p style={{ fontSize: "0.75rem", color: "var(--success)", marginTop: "0.3rem" }}>Promo applied! {promoDiscount}% discount (-${discountAmount.toFixed(2)})</p>}
                 </div>
 
                 {/* Fake card UI */}
@@ -255,7 +249,7 @@ export default function CheckoutPage() {
                   <div style={{ position: "absolute", bottom: "-30px", left: "30px", width: "80px", height: "80px", borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
                   <p style={{ fontSize: "0.7rem", color: "var(--text-tertiary)", marginBottom: "1rem", letterSpacing: "0.1em" }}>CARD NUMBER</p>
                   <p style={{ fontFamily: "monospace", fontSize: "1.1rem", letterSpacing: "0.15em", marginBottom: "1.5rem", color: "var(--text-primary)" }}>
-                    {card.number || "вЂўвЂўвЂўвЂў вЂўвЂўвЂўвЂў вЂўвЂўвЂўвЂў вЂўвЂўвЂўвЂў"}
+                    {card.number || "\u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022"}
                   </p>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <div><p style={{ fontSize: "0.65rem", color: "var(--text-tertiary)", letterSpacing: "0.1em" }}>CARD HOLDER</p><p style={{ fontSize: "0.875rem", fontWeight: 600 }}>{card.name || "YOUR NAME"}</p></div>
@@ -278,7 +272,7 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <label style={{ fontSize: "0.75rem", fontWeight: 600, display: "block", marginBottom: "0.3rem" }}>CVV</label>
-                    <input style={inp} value={card.cvv} onChange={e => setCard(c => ({ ...c, cvv: e.target.value.replace(/\D/g, "").slice(0, 3) }))} placeholder="вЂўвЂўвЂў" maxLength={3} type="password" />
+                    <input style={inp} value={card.cvv} onChange={e => setCard(c => ({ ...c, cvv: e.target.value.replace(/\D/g, "").slice(0, 3) }))} placeholder="\u2022\u2022\u2022" maxLength={3} type="password" />
                   </div>
                 </div>
 
@@ -286,7 +280,7 @@ export default function CheckoutPage() {
                   <button type="button" onClick={() => setStep("address")} style={{ padding: "0.75rem 1.25rem", borderRadius: "var(--radius-md)", background: "transparent", color: "var(--text-secondary)", fontWeight: 500, fontSize: "0.875rem", border: "1px solid var(--border-color)", cursor: "pointer" }}>Back</button>
                   <button type="submit" disabled={processing} style={{ flex: 1, padding: "0.75rem", borderRadius: "var(--radius-md)", background: processing ? "var(--bg-tertiary)" : "var(--accent-color)", color: processing ? "var(--text-secondary)" : "var(--bg-primary)", fontWeight: 700, fontSize: "0.9rem", border: "none", cursor: processing ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
                     <Lock size={15} />
-                    {processing ? "Processing payment..." : `Pay $${total.toFixed(2)}`}
+                    {processing ? "Processing payment..." : "Pay $" + total.toFixed(2)}
                   </button>
                 </div>
               </form>
@@ -334,15 +328,20 @@ export default function CheckoutPage() {
               ))}
             </div>
             <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid var(--border-color)", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-              {[
-                { label: "Subtotal", value: `$${subtotal.toFixed(2)}` },
-                { label: "Shipping", value: shipping === 0 ? "Free" : `$${shipping.toFixed(2)}` },
-              ].map(r => (
-                <div key={r.label} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem" }}>
-                  <span style={{ color: "var(--text-secondary)" }}>{r.label}</span>
-                  <span>{r.value}</span>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem" }}>
+                <span style={{ color: "var(--text-secondary)" }}>Subtotal</span>
+                <span>${subtotal.toFixed(2)}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem" }}>
+                <span style={{ color: "var(--text-secondary)" }}>Shipping</span>
+                <span>{shipping === 0 ? "Free" : "$" + shipping.toFixed(2)}</span>
+              </div>
+              {discountAmount > 0 && (
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem" }}>
+                  <span style={{ color: "var(--success)" }}>Discount ({promoDiscount}%)</span>
+                  <span style={{ color: "var(--success)", fontWeight: 600 }}>-${discountAmount.toFixed(2)}</span>
                 </div>
-              ))}
+              )}
               <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: "1rem", paddingTop: "0.5rem", borderTop: "1px solid var(--border-color)" }}>
                 <span>Total</span>
                 <span>${total.toFixed(2)}</span>
