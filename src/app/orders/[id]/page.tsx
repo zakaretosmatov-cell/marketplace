@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import { db } from "@/lib/firebase";
+import { doc, updateDoc } from "firebase/firestore";
 import { Order } from "@/lib/types";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { ArrowLeft, MapPin, Package, Clock, CheckCircle, Truck, XCircle, RefreshCw, CreditCard, Hash } from "lucide-react";
@@ -21,7 +23,7 @@ const STATUS_META: Record<Order["status"], { label: string; color: string; bg: s
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { user, role } = useAuth();
+  const { role } = useAuth();
   const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,16 +57,14 @@ export default function OrderDetailPage() {
     if (!order || !trackingInput.trim()) return;
     setUpdating(true);
     try {
-      await api.updateOrderStatus(order.id, order.status, "Tracking number added: " + trackingInput.trim());
-      // Also save tracking number directly
-      const { doc: firestoreDoc, updateDoc: firestoreUpdate } = await import("firebase/firestore");
-      const { db } = await import("@/lib/firebase");
-      await firestoreUpdate(firestoreDoc(db, "orders", order.id), { trackingNumber: trackingInput.trim() });
+      await updateDoc(doc(db, "orders", order.id), { trackingNumber: trackingInput.trim() });
       setOrder(prev => prev ? { ...prev, trackingNumber: trackingInput.trim() } : null);
     } finally {
       setUpdating(false);
     }
   };
+
+  const inp = { padding: "0.6rem 0.9rem", borderRadius: "0.375rem", border: "1px solid var(--border-color)", background: "var(--bg-primary)", color: "var(--text-primary)", fontSize: "0.875rem" };
 
   if (loading) return (
     <ProtectedRoute>
@@ -85,7 +85,6 @@ export default function OrderDetailPage() {
   const canManage = role === "admin" || role === "seller";
   const historyMap = new Map((order.statusHistory || []).map(e => [e.status, e]));
   const isCancelled = order.status === "cancelled";
-  const inp = { padding: "0.6rem 0.9rem", borderRadius: "0.375rem", border: "1px solid var(--border-color)", background: "var(--bg-primary)", color: "var(--text-primary)", fontSize: "0.875rem" };
 
   return (
     <ProtectedRoute>
@@ -112,8 +111,10 @@ export default function OrderDetailPage() {
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "1.5rem", alignItems: "start" }}>
 
+          {/* Left column */}
           <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
 
+            {/* Timeline */}
             <div style={{ border: "1px solid var(--border-color)", borderRadius: "0.5rem", padding: "1.5rem", background: "var(--bg-card)" }}>
               <h2 style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-secondary)", marginBottom: "1.5rem" }}>Order Timeline</h2>
               {isCancelled ? (
@@ -149,7 +150,7 @@ export default function OrderDetailPage() {
                         <div style={{ flex: 1, paddingTop: "0.3rem", paddingBottom: isLast ? 0 : "1rem" }}>
                           <p style={{ fontWeight: isCurrent ? 700 : 500, fontSize: "0.875rem", color: isCompleted ? "var(--text-primary)" : "var(--text-tertiary)" }}>{m.label}</p>
                           <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "0.1rem" }}>{m.description}</p>
-                          {event && <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", marginTop: "0.15rem" }}>{new Date(event.timestamp).toLocaleString()}{event.note ? " вЂ” " + event.note : ""}</p>}
+                          {event && <p style={{ fontSize: "0.75rem", color: "var(--text-tertiary)", marginTop: "0.15rem" }}>{new Date(event.timestamp).toLocaleString()}{event.note ? " \u2014 " + event.note : ""}</p>}
                         </div>
                       </div>
                     );
@@ -158,6 +159,7 @@ export default function OrderDetailPage() {
               )}
             </div>
 
+            {/* Items */}
             <div style={{ border: "1px solid var(--border-color)", borderRadius: "0.5rem", overflow: "hidden", background: "var(--bg-card)" }}>
               <div style={{ padding: "0.875rem 1.25rem", borderBottom: "1px solid var(--border-color)", background: "var(--bg-secondary)" }}>
                 <h2 style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-secondary)" }}>Items ({order.items.length})</h2>
@@ -183,8 +185,10 @@ export default function OrderDetailPage() {
             </div>
           </div>
 
+          {/* Right column */}
           <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
 
+            {/* Shipping + Tracking */}
             <div style={{ border: "1px solid var(--border-color)", borderRadius: "0.5rem", padding: "1.25rem", background: "var(--bg-card)" }}>
               <h2 style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-secondary)", marginBottom: "0.75rem" }}>Shipping Address</h2>
               <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
@@ -199,16 +203,28 @@ export default function OrderDetailPage() {
               )}
               {canManage && (
                 <div style={{ marginTop: "0.75rem" }}>
-                  <label style={{ fontSize: "0.75rem", fontWeight: 600, display: "block", marginBottom: "0.3rem", color: "var(--text-secondary)" }}>Tracking Number</label>
+                  <label style={{ fontSize: "0.75rem", fontWeight: 600, display: "block", marginBottom: "0.3rem", color: "var(--text-secondary)" }}>Set Tracking Number</label>
                   <div style={{ display: "flex", gap: "0.5rem" }}>
-                    <input value={trackingInput} onChange={e => setTrackingInput(e.target.value)} placeholder="e.g. 1Z999AA10123456784" style={{ ...inp, flex: 1, fontFamily: "monospace", fontSize: "0.8rem" }} />
-                    <button onClick={handleSaveTracking} disabled={updating || !trackingInput.trim()} style={{ padding: "0.5rem 0.75rem", borderRadius: "0.375rem", background: "var(--accent-color)", color: "var(--bg-primary)", fontSize: "0.8rem", fontWeight: 600, border: "none", cursor: updating ? "not-allowed" : "pointer", flexShrink: 0 }}>
+                    <input
+                      value={trackingInput}
+                      onChange={e => setTrackingInput(e.target.value)}
+                      placeholder="e.g. 1Z999AA10123456784"
+                      style={{ ...inp, flex: 1, fontFamily: "monospace", fontSize: "0.8rem" }}
+                    />
+                    <button
+                      onClick={handleSaveTracking}
+                      disabled={updating || !trackingInput.trim()}
+                      style={{ padding: "0.5rem 0.75rem", borderRadius: "0.375rem", background: "var(--accent-color)", color: "var(--bg-primary)", fontSize: "0.8rem", fontWeight: 600, border: "none", cursor: updating ? "not-allowed" : "pointer", flexShrink: 0 }}
+                    >
                       Save
                     </button>
                   </div>
                 </div>
               )}
             </div>
+
+            {/* Summary */}
+            <div style={{ border: "1px solid var(--border-color)", borderRadius: "0.5rem", padding: "1.25rem", background: "var(--bg-card)" }}>
               <h2 style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-secondary)", marginBottom: "0.75rem" }}>Summary</h2>
               {[
                 { label: "Order ID", value: "#" + order.id.slice(-8).toUpperCase() },
@@ -224,12 +240,15 @@ export default function OrderDetailPage() {
               ))}
             </div>
 
+            {/* Return button */}
             {order.status === "delivered" && (
-              <Link href={`/orders/return?orderId=${order.id}`}
+              <Link href={"/orders/return?orderId=" + order.id}
                 style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", padding: "0.75rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", background: "var(--bg-secondary)", color: "var(--text-secondary)", fontSize: "0.875rem", fontWeight: 500, textDecoration: "none" }}>
                 <RefreshCw size={15} /> Request Return
               </Link>
             )}
+
+            {/* Update Status */}
             {canManage && order.status !== "delivered" && order.status !== "cancelled" && (
               <div style={{ border: "1px solid var(--border-color)", borderRadius: "0.5rem", padding: "1.25rem", background: "var(--bg-card)" }}>
                 <h2 style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-secondary)", marginBottom: "0.75rem" }}>Update Status</h2>
