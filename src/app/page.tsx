@@ -53,7 +53,7 @@ export default function Home() {
               <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--success)", display: "inline-block", animation: "pulse 2s infinite" }} />
               New arrivals every week
             </div>
-            <h1 style={{ fontFamily: "var(--font-display)", fontSize: "3.5rem", fontWeight: 800, lineHeight: 1.08, letterSpacing: "-0.04em", marginBottom: "1.5rem" }}>
+            <h1 style={{ fontFamily: "var(--font-display)", fontSize: "3.5rem", fontWeight: 800, lineHeight: 1.08, letterSpacing: "-0.02em", marginBottom: "1.5rem" }}>
               The best tech,<br />
               <span style={{ background: "linear-gradient(135deg, var(--accent-color), #7c3aed)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
                 all in one place.
